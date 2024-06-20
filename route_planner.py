@@ -1,4 +1,5 @@
-
+from queue import PriorityQueue
+from math import inf
 
 class Plan_route():
     def __init__(self,ski_resort,start,length):
@@ -6,11 +7,27 @@ class Plan_route():
         self._start = start
         self._length = length
 
-class ski_lift():
-    pass
+    def djikstras_traversal(self):
+        queue = PriorityQueue()
+        dim = len(self._ski_resort.keys())
+        visited = [False] * dim #Needs to be a dictionary not a list
+        distances = [inf] * dim
 
-class ski_park():
-    pass
+        distances[self._start] = 0
+        queue.put(0,self._start)
 
-class amenity():
-    pass
+        while not queue.empty():
+            #BFS algorithm with priority queue of (distance,node) tuple
+            dist, v = queue.get()
+
+            if visited[v]:
+                continue
+            visited[v] = True
+
+
+
+
+
+
+
+#Create my own priority queue class

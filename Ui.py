@@ -3,5 +3,5 @@ from abc import ABC, abstractmethod
 class Ui(ABC):
 
     @abstractmethod
-    def run(self):
+    def menu(self):
         raise NotImplementedError
