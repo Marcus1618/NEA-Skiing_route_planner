@@ -9,20 +9,24 @@ class Plan_route():
 
     def djikstras_traversal(self):
         queue = PriorityQueue()
-        dim = len(self._ski_resort.keys())
-        visited = [False] * dim #Needs to be a dictionary not a list
-        distances = [inf] * dim
+        distances = set()
+        visited = set()
 
-        distances[self._start] = 0
-        queue.put(0,self._start)
+        distances.add((0,self._start))
+        queue.put((0,self._start))
 
         while not queue.empty():
             #BFS algorithm with priority queue of (distance,node) tuple
             dist, v = queue.get()
 
-            if visited[v]:
+            if v in visited:
                 continue
-            visited[v] = True
+            visited.add(v)
+
+            for w, edge in enumerate(self._ski_resort[v]):
+                if edge[0] not in visited:
+                    queue.put((dist + edge[1]["length"],w)) #Checked up to here
+                    distances.add((dist + edge[1]["length"],w))
 
 
 
