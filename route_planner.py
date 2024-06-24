@@ -9,10 +9,12 @@ class Plan_route():
 
     def djikstras_traversal(self):
         queue = PriorityQueue()
-        distances = set()
+        keys = (self._ski_resort.keys())
+        values = (inf for i in range(len(self._ski_resort)))
+        distances = dict(zip(keys,values))
         visited = set()
 
-        distances.add((0,self._start))
+        distances[self._start] = 0
         queue.put((0,self._start))
 
         while not queue.empty():
@@ -23,10 +25,27 @@ class Plan_route():
                 continue
             visited.add(v)
 
-            for w, edge in enumerate(self._ski_resort[v]):
+            for edge in self._ski_resort[v]:
                 if edge[0] not in visited:
-                    queue.put((dist + edge[1]["length"],w)) #Checked up to here
-                    distances.add((dist + edge[1]["length"],w))
+                    distances[edge[0]] = min(edge[1]["length"]+dist,distances[edge[0]])
+                    queue.put((edge[1]["length"],edge[0]))
+
+        return distances
+
+
+if __name__ == "__main__":
+    ski_resorts = {
+        "Val Thorens" : {
+            "Plein Sud bottom": [["Plein Sud top",{"length":10}]],
+            "Plein Sud top": [["Pionniers bottom",{"length":5}],["Pionniers top",{"length":1}]],
+            "3 Vallees bottom": [["Plein Sud bottom",{"length":15}],["3 Vallees top",{"length":6}]],
+            "3 Vallees top": [["3 Vallees bottom",{"length":5}],["Plein Sud top",{"length":4}]],
+            "Pionniers bottom": [["Plein Sud bottom",{"length":10}],["Pionniers top",{"length":4}]],
+            "Pionniers top": [["3 Vallees bottom",{"length":1}]]
+            }
+    }
+
+    print(Plan_route(ski_resorts["Val Thorens"],"Plein Sud top",3).djikstras_traversal())
 
 
 
