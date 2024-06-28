@@ -28,9 +28,14 @@ class Plan_route():
             for edge in self._ski_resort[v]:
                 if edge[0] not in visited:
                     distances[edge[0]] = min(edge[1]["length"]+dist,distances[edge[0]])
-                    queue.put((edge[1]["length"],edge[0]))
+                    queue.put((distances[edge[0]],edge[0]))
 
         return distances
+    
+    def get_route(self):
+        distances = self.djikstras_traversal()
+        distance_from_start = distances[self._start]
+
 
 
 if __name__ == "__main__":
