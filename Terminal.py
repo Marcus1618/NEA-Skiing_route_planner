@@ -3,15 +3,15 @@ from route_planner import Plan_route
 import re
 
 ski_resorts = {
-    "Val_thorens" : {
-        "Plein Sud bottom": [],
+    "Val Thorens" : {
+        "Plein Sud bottom": [["Plein Sud top",{"length":10}]],
         "Plein Sud top": [["Pionniers bottom",{"length":5}],["Pionniers top",{"length":1}]],
-        "3 Vallees bottom": [["Plein Sud bottom",{"length":15}]],
+        "3 Vallees bottom": [["Plein Sud bottom",{"length":15}],["3 Vallees top",{"length":6}]],
         "3 Vallees top": [["3 Vallees bottom",{"length":5}],["Plein Sud top",{"length":4}]],
-        "Pionniers bottom": [["Plein Sud bottom",{"length":10}]],
-        "Pionniers top": [["3 Vallees top",{"length":1}]]
+        "Pionniers bottom": [["Plein Sud bottom",{"length":10}],["Pionniers top",{"length":4}]],
+        "Pionniers top": [["3 Vallees bottom",{"length":1}]]
         }
-} #Outsource to a file
+}#Outsource to a file
 
 class Terminal(Ui):
     
@@ -21,7 +21,8 @@ class Terminal(Ui):
         start = ""
         valid = None
     
-    def run(self):
+    def menu(self):
+        option = "-1"
         print("""
         Menu:
         1. Make a route
@@ -52,8 +53,9 @@ class Terminal(Ui):
 
     def _add_times(self, t1, t2):
         h1, m1 = t1.split(":")
-        h2, m2 = t2.split(":")
-        h1, m1, h2, m2 = int(h1), int(m1), int(h2), int(m2)
+        h1, m1 = int(h1), int(m1)
+        h2 = t2 // 60
+        m2 = t2 % 60
         h = h1 + h2
         m = m1 + m2
         if m > 59:
@@ -72,26 +74,31 @@ class Terminal(Ui):
         return f"{h}:{m}"
 
     def generate_route(self):
-        
+
+        valid = None
         while valid == None:
             length = input("How long do you want to ski for (hh:mm): ")
 
             if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', length):
                 valid = True
 
+        ski_resort = ""
         while ski_resort not in ski_resorts.keys():
-            ski_resort = input(f"Which ski resort are you in: {ski_resorts.values()}\n")
-        print(ski_resorts[ski_resort]) #MAKE THIS BETTER
-        while start not in ski_resorts[ski_resort].keys():
-            start = input("From what lift do you want to start your route: ")
+            ski_resort = input(f"Which ski resort are you in: ({', '.join(ski_resorts.keys())})\n")
 
+        start = ""
+        while start not in ski_resorts[ski_resort].keys():
+            start = input(f"From what lift do you want to start your route: ({', '.join(ski_resorts[ski_resort].keys())})\n")
+
+        start_time = "00:00"
         start_time = input("At what time do you want to start your route (hh:mm): ") #ADD VALIDATION - between opening and closing times + right format
 
-        route = Plan_route(ski_resorts[ski_resort], start, length)
-        new_time = start_time
-        for i in range(len(route)):
-            new_time = self._add_times(new_time,route[i][1]["length"])
-            print(f"{i+1}. {route[i][0]} to {route[i+1][0]}, {route[i+1][1]['length']} minutes, {new_time}\n")
+        route = Plan_route(ski_resorts[ski_resort], start, length).get_route()
+        old_time = start_time
+        for i in range(len(route)-1):
+            new_time = self._add_times(old_time,route[i+1][1]["length"])
+            print(f"{i+1}. {route[i][0]} to {route[i+1][0]} taking {route[i+1][1]['length']} minutes - {new_time}")
+            old_time = new_time
 
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
         option = input("Enter 'm' to return to the main menu or 'q' to quit: ")

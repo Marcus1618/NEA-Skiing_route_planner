@@ -21,4 +21,4 @@ if __name__ == "__main__":
     else:
         usage()
 
-    ui.run()
+    ui.menu()

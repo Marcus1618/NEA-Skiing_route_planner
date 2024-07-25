@@ -6,7 +6,11 @@ class Plan_route():
     def __init__(self,ski_resort,start,length):
         self._ski_resort = ski_resort
         self._start = start
-        self._length = length #FORMAT
+        self._length = self._hours_to_minutes(length)
+
+    def _hours_to_minutes(self,time):
+        h,m = time.split(":")
+        return int(h)*60 + int(m)
 
     def djikstras_traversal(self,start):
         queue = PriorityQueue()
@@ -44,7 +48,7 @@ class Plan_route():
             time_from_start = times[self._start]
 
 
-            adjacent_nodes = self._ski_resort[self._start]
+            adjacent_nodes = self._ski_resort[chosen_node[0]]
             priorities = []
             for i in range(len(adjacent_nodes)):
                 priorities.append(random.randint(1,10000)) #There is a possibility of same priority here!!!
