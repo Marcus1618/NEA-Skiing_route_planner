@@ -9,11 +9,37 @@ ski_resorts = {
         }
 }
 
-class ski_lift():
+class ski_resorts():
+    def __init__(self):
+        self.__resorts = [ski_resort("Val Thorens")]
+
+class ski_resort():
+    def __init__(self,name):
+        self.__name = name
+        self.__lifts = []
+        self.__parks = []
+        self.__amenities = []
+    
+
+class node():
+    def __init__(self,name):
+        self.__name = name
+
+    def add(self):
+        pass
+
+    def remove(self):
+        pass
+
+class ski_lift(node):
+    def __init__(self,name):
+        super().__init__(name)
+    
+    def add_adjacent(self):
+        pass
+
+class ski_park(node):
     pass
 
-class ski_park():
-    pass
-
-class amenity():
+class amenity(node):
     pass
