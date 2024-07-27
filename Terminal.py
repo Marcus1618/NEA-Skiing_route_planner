@@ -11,7 +11,7 @@ ski_resorts = {
         "Pionniers bottom": [["Plein Sud bottom",{"length":10}],["Pionniers top",{"length":4}]],
         "Pionniers top": [["3 Vallees bottom",{"length":1}]]
         }
-}#Outsource to a file
+}
 
 class Terminal(Ui):
     
