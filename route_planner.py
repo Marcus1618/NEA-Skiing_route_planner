@@ -4,10 +4,15 @@ import random
 from ski_resorts import ski_resorts, ski_resort, node, ski_lift, run
 
 class Plan_route():
-    def __init__(self,ski_resort,start,length):
+    def __init__(self,ski_resort,start,length,start_time):
+        self._ski_resort_object = ski_resort
         self._ski_resort = ski_resort.nodes
         self._start = start
         self._length = self._hours_to_minutes(length)
+        self._ski_resort_object.time = start_time
+        self._ski_resort_object.check_open()
+
+
 
     def _hours_to_minutes(self,time):
         h,m = time.split(":")
@@ -52,7 +57,6 @@ class Plan_route():
             
             adjacent_nodes = self._ski_resort[chosen_node.name].runs
             priorities = []
-            time_values = []
             values = []
 
             for node in adjacent_nodes:
@@ -68,16 +72,14 @@ class Plan_route():
                     for node_2 in adjacent_nodes_2:
                         value2 = value1 + 0
                         temp_time_elapsed2 = temp_time_elapsed1 + node_2.length
-                        temp = 0
                         times,prev = self._djikstras_traversal(node_2.name)
                         time_from_start = times[self._start]
                         time_value = 0
-                        if time_from_start > self._length - temp_time_elapsed2:
-                            temp = self._length - temp_time_elapsed2 - time_from_start
-                        time_value = temp
-                        time_values.append(time_value)
-                        values.append(value2)
-
+                        time_value = self._length - temp_time_elapsed2 - time_from_start
+                        if time_value < 0:
+                            values.append(time_value)
+                        else:
+                            values.append(value2)
                 priorities.append(max(values))
 
 
@@ -85,22 +87,22 @@ class Plan_route():
                 
                 #No set of three moves is viable however this checks if a set of two moves is still viable
                 priorities_for_double = []
-                values = []
                 for node in adjacent_nodes:
                     value = 0
                     temp_time_elapsed = time_elapsed + node.length
                     adjacent_nodes_1 = self._ski_resort[node.name].runs
 
                     for node_1 in adjacent_nodes_1:
-                        value1 = 0
+                        value1 = value + 0
                         temp_time_elapsed1 = temp_time_elapsed + node_1.length
-                        temp = 0
                         times,prev = self._djikstras_traversal(node_1.name)
                         time_from_start = times[self._start]
-                        if time_from_start > self._length - temp_time_elapsed1:
-                            temp = self._length - temp_time_elapsed1 - time_from_start
-                        value1 = value + temp
-                        priorities_for_double.append(value1)
+                        time_value = 0
+                        time_value = self._length - temp_time_elapsed1 - time_from_start
+                        if time_value < 0:
+                            priorities_for_double.append(time_value)
+                        else:
+                            priorities_for_double.append(value1)
 
                     priorities_for_double.append(-inf)
 
@@ -153,8 +155,10 @@ class Plan_route():
                 if max(priorities_for_double) >= 0: #if the two moves are viable add them to the route
                     time_elapsed += chosen_node_1.length
                     route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed})
+                    self._ski_resort_object.increment_time(chosen_node.length)
                     time_elapsed += chosen_node_2.length
-                    route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed})     
+                    route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed})
+                    self._ski_resort_object.increment_time(chosen_node.length)   
 
                 complete = True #end the route generation
 
@@ -193,6 +197,7 @@ class Plan_route():
 
                 time_elapsed += chosen_node.length
                 route.append({"start":chosen_node.name,"time_elapsed":time_elapsed})
+                self._ski_resort_object.increment_time(chosen_node.length)
 
 
         return route

@@ -70,21 +70,21 @@ class Terminal(Ui):
         example = ski_resorts()
         example.add_resort("Val Thorens")
         example.resorts["Val Thorens"].add_lift("Plein Sud bottom")
-        example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10)
+        example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00")
         example.resorts["Val Thorens"].add_lift("Plein Sud top")
-        example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5)
-        example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1)
+        example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5, "00:00", "00:00")
+        example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1, "00:00", "00:00")
         example.resorts["Val Thorens"].add_lift("3 Vallees bottom")
-        example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15)
-        example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6)
+        example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15, "00:00", "00:00")
+        example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6, "08:30", "16:00")
         example.resorts["Val Thorens"].add_lift("3 Vallees top")
-        example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5)
-        example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("Plein Sud top",4)
+        example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5, "00:00", "00:00")
+        example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("Plein Sud top",4, "00:00", "00:00")
         example.resorts["Val Thorens"].add_lift("Pionniers bottom")
-        example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Plein Sud bottom",10)
-        example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4)
+        example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Plein Sud bottom",10, "00:00", "00:00")
+        example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4, "08:00", "16:30")
         example.resorts["Val Thorens"].add_lift("Pionniers top")
-        example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1)
+        example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "00:00")
 
         return example
 
@@ -110,7 +110,7 @@ class Terminal(Ui):
         start_time = "00:00"
         start_time = input("At what time do you want to start your route (hh:mm): ") #ADD VALIDATION - between opening and closing times + right format
 
-        route = Plan_route(ski_resorts_data.resorts[ski_resort], start, length).get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
+        route = Plan_route(ski_resorts_data.resorts[ski_resort], start, length, start_time).get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
         for i in range(len(route)-1):
             print(f"{i+1}. {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self._add_times(start_time,route[i+1]['time_elapsed'])}")
 
