@@ -1,8 +1,9 @@
 from Ui import Ui
 from route_planner import Plan_route
 import re
+from ski_resorts import ski_resorts, ski_resort, ski_lift, run
 
-ski_resorts = {
+"""ski_resorts = {
     "Val Thorens" : {
         "Plein Sud bottom": [["Plein Sud top",{"length":10}]],
         "Plein Sud top": [["Pionniers bottom",{"length":5}],["Pionniers top",{"length":1}]],
@@ -11,7 +12,7 @@ ski_resorts = {
         "Pionniers bottom": [["Plein Sud bottom",{"length":10}],["Pionniers top",{"length":4}]],
         "Pionniers top": [["3 Vallees bottom",{"length":1}]]
         }
-}
+}"""
 
 class Terminal(Ui):
     
@@ -53,27 +54,43 @@ class Terminal(Ui):
 
     def _add_times(self, t1, t2):
         h1, m1 = t1.split(":")
-        h1, m1 = int(h1), int(m1)
-        h2 = t2 // 60
-        m2 = t2 % 60
-        h = h1 + h2
-        m = m1 + m2
-        if m > 59:
-            h += 1
-            m -= 60
-        if h > 23:
-            h -= 24
+        m2 = t2
+        mins = int(m1) + int(m2)
+        hours = int(h1) + mins // 60
+        mins = mins % 60
+        if hours > 23:
+            hours %= 24
+        if len(str(hours)) == 1:
+            hours = f"0{hours}"
+        if len(str(mins)) == 1:
+            mins = f"0{mins}"
+        return f"{hours}:{mins}"
+    
+    def _construct_example_ski_resort(self):
+        example = ski_resorts()
+        example.add_resort("Val Thorens")
+        example.resorts["Val Thorens"].add_lift("Plein Sud bottom")
+        example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10)
+        example.resorts["Val Thorens"].add_lift("Plein Sud top")
+        example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5)
+        example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1)
+        example.resorts["Val Thorens"].add_lift("3 Vallees bottom")
+        example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15)
+        example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6)
+        example.resorts["Val Thorens"].add_lift("3 Vallees top")
+        example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5)
+        example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("Plein Sud top",4)
+        example.resorts["Val Thorens"].add_lift("Pionniers bottom")
+        example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Plein Sud bottom",10)
+        example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4)
+        example.resorts["Val Thorens"].add_lift("Pionniers top")
+        example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1)
 
-        h = str(h)
-        m = str(m)
-        if len(h) == 1:
-            h = "0" + h
-        if len(m) == 1:
-            m = "0" + m
-        
-        return f"{h}:{m}"
+        return example
 
     def generate_route(self):
+
+        ski_resorts_data = self._construct_example_ski_resort()
 
         valid = None
         while valid == None:
@@ -83,22 +100,20 @@ class Terminal(Ui):
                 valid = True
 
         ski_resort = ""
-        while ski_resort not in ski_resorts.keys():
-            ski_resort = input(f"Which ski resort are you in: ({', '.join(ski_resorts.keys())})\n")
+        while ski_resort not in ski_resorts_data.resorts.keys():
+            ski_resort = input(f"Which ski resort are you in: ({', '.join(ski_resorts_data.resorts.keys())})\n")
 
         start = ""
-        while start not in ski_resorts[ski_resort].keys():
-            start = input(f"From what lift do you want to start your route: ({', '.join(ski_resorts[ski_resort].keys())})\n")
+        while start not in ski_resorts_data.resorts[ski_resort].nodes.keys():
+            start = input(f"From what lift do you want to start your route: ({', '.join(ski_resorts_data.resorts[ski_resort].nodes.keys())})\n")
 
         start_time = "00:00"
         start_time = input("At what time do you want to start your route (hh:mm): ") #ADD VALIDATION - between opening and closing times + right format
 
-        route = Plan_route(ski_resorts[ski_resort], start, length).get_route()
-        old_time = start_time
+        route = Plan_route(ski_resorts_data.resorts[ski_resort], start, length).get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
         for i in range(len(route)-1):
-            new_time = self._add_times(old_time,route[i+1][1]["length"])
-            print(f"{i+1}. {route[i][0]} to {route[i+1][0]} taking {route[i+1][1]['length']} minutes - {new_time}")
-            old_time = new_time
+            print(f"{i+1}. {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self._add_times(start_time,route[i+1]['time_elapsed'])}")
+
 
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
         option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
@@ -121,3 +136,9 @@ class Terminal(Ui):
 
     def view_previous_routes(self):
         pass
+
+#TESTING
+if __name__ == "__main__":
+    ui = Terminal()
+    ui.generate_route()
+

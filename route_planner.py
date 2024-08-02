@@ -1,10 +1,11 @@
 from queue import PriorityQueue
 from math import inf
 import random
+from ski_resorts import ski_resorts, ski_resort, node, ski_lift, run
 
 class Plan_route():
     def __init__(self,ski_resort,start,length):
-        self._ski_resort = ski_resort
+        self._ski_resort = ski_resort.nodes
         self._start = start
         self._length = self._hours_to_minutes(length)
 
@@ -18,6 +19,7 @@ class Plan_route():
         values = (inf for i in range(len(self._ski_resort)))
         distances = dict(zip(keys,values))
         visited = set()
+        previous_node = dict()
 
         distances[start] = 0
         queue.put((0,start))
@@ -30,67 +32,70 @@ class Plan_route():
                 continue
             visited.add(v)
 
-            for edge in self._ski_resort[v]:
-                if edge[0] not in visited:
-                    distances[edge[0]] = min(edge[1]["length"]+dist,distances[edge[0]])
-                    queue.put((distances[edge[0]],edge[0]))
+            for edge in self._ski_resort[v].runs:
+                if edge.name not in visited:
+                    distances[edge.name] = min(edge.length+dist,distances[edge.name])
+                    if edge.length+dist <= distances[edge.name]:
+                        previous_node[edge.name] = v
+                    queue.put((distances[edge.name],edge.name))
 
-        return distances
+        return distances, previous_node
     
+
     def get_route(self):
         time_elapsed = 0
         complete = False
-        route = [[self._start,{"length":0}]]
-        chosen_node = [self._start,{"length":0}]
+        route = [{"start":self._start,"time_elapsed":0}]
+        chosen_node = self._ski_resort[self._start]
 
         while complete == False:
-
-            adjacent_nodes = self._ski_resort[chosen_node[0]]
+            
+            adjacent_nodes = self._ski_resort[chosen_node.name].runs
             priorities = []
+            time_values = []
             values = []
 
             for node in adjacent_nodes:
                 value = 0
-                temp_time_elapsed = time_elapsed + node[1]["length"]
-                adjacent_nodes_1 = self._ski_resort[node[0]]
+                temp_time_elapsed = time_elapsed + node.length
+                adjacent_nodes_1 = self._ski_resort[node.name].runs
 
                 for node_1 in adjacent_nodes_1:
-                    value1 = 0
-                    temp_time_elapsed1 = temp_time_elapsed + node_1[1]["length"]
                     value1 = value + 0
-                    adjacent_nodes_2 = self._ski_resort[node_1[0]]
+                    temp_time_elapsed1 = temp_time_elapsed + node_1.length
+                    adjacent_nodes_2 = self._ski_resort[node_1.name].runs
 
                     for node_2 in adjacent_nodes_2:
-                        value2 = 0
-                        temp_time_elapsed2 = temp_time_elapsed1 + node_2[1]["length"]
+                        value2 = value1 + 0
+                        temp_time_elapsed2 = temp_time_elapsed1 + node_2.length
                         temp = 0
-                        times = self._djikstras_traversal(node_2[0])
+                        times,prev = self._djikstras_traversal(node_2.name)
                         time_from_start = times[self._start]
+                        time_value = 0
                         if time_from_start > self._length - temp_time_elapsed2:
                             temp = self._length - temp_time_elapsed2 - time_from_start
-                        value2 = value1 + temp
+                        time_value = temp
+                        time_values.append(time_value)
                         values.append(value2)
 
                 priorities.append(max(values))
 
 
-
-            if max(priorities) < 0 and chosen_node[0] == self._start:
+            if max(priorities) < 0 and chosen_node.name == self._start:
                 
                 #No set of three moves is viable however this checks if a set of two moves is still viable
-                adjacent_nodes = self._ski_resort[chosen_node[0]]
                 priorities_for_double = []
                 values = []
                 for node in adjacent_nodes:
                     value = 0
-                    temp_time_elapsed = time_elapsed + node[1]["length"]
-                    adjacent_nodes_1 = self._ski_resort[node[0]]
+                    temp_time_elapsed = time_elapsed + node.length
+                    adjacent_nodes_1 = self._ski_resort[node.name].runs
 
                     for node_1 in adjacent_nodes_1:
                         value1 = 0
-                        temp_time_elapsed1 = temp_time_elapsed + node_1[1]["length"]
+                        temp_time_elapsed1 = temp_time_elapsed + node_1.length
                         temp = 0
-                        times = self._djikstras_traversal(node_1[0])
+                        times,prev = self._djikstras_traversal(node_1.name)
                         time_from_start = times[self._start]
                         if time_from_start > self._length - temp_time_elapsed1:
                             temp = self._length - temp_time_elapsed1 - time_from_start
@@ -112,7 +117,7 @@ class Plan_route():
                             inf_num += 1
                         count += 1
                     chosen_node_1 = adjacent_nodes[inf_num]
-                    adjacent_nodes_double = self._ski_resort[chosen_node_1[0]]
+                    adjacent_nodes_double = self._ski_resort[chosen_node_1.name].runs
                     if len(divides) == 0:
                         chosen_node_2 = adjacent_nodes_double[index_choice]
                     else:
@@ -139,19 +144,37 @@ class Plan_route():
                             inf_num += 1
                         count += 1
                     chosen_node_1 = adjacent_nodes[inf_num]
-                    adjacent_nodes_double = self._ski_resort[chosen_node_1[0]]
+                    adjacent_nodes_double = self._ski_resort[chosen_node_1.name].runs
                     if len(divides) == 0:
                         chosen_node_2 = adjacent_nodes_double[index_choice]
                     else:
                         chosen_node_2 = adjacent_nodes_double[index_choice - divides[-1] - 1]
 
                 if max(priorities_for_double) >= 0: #if the two moves are viable add them to the route
-                    time_elapsed += chosen_node_1[1]["length"]
-                    time_elapsed += chosen_node_2[1]["length"]
-                    route.append(chosen_node_1)
-                    route.append(chosen_node_2)     
+                    time_elapsed += chosen_node_1.length
+                    route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed})
+                    time_elapsed += chosen_node_2.length
+                    route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed})     
 
                 complete = True #end the route generation
+
+            elif max(priorities) < 0: #If no set of three moves is viable but the route has not returned to the start node
+                #find shortest way back
+                times,previous_node = self._djikstras_traversal(chosen_node.name)
+                
+                route_to_finish = []
+                current = self._start
+                route_to_finish.insert(0,current)
+                while current != chosen_node.name:
+                    current = previous_node[current]
+                    route_to_finish.insert(0,current)
+                
+                for i in range(len(route_to_finish)-1):
+                    time_elapsed += self._ski_resort[route_to_finish[i]].runs[[run.name for run in self._ski_resort[route_to_finish[i]].runs].index(route_to_finish[i+1])].length
+                    route.append({"start":route_to_finish[i+1],"time_elapsed":time_elapsed})
+
+                complete = True
+            
 
             else: #if a set of three moves is viable
                 if priorities.count(max(priorities)) == 1:
@@ -168,26 +191,37 @@ class Plan_route():
                                 break
                     chosen_node = adjacent_nodes[index_choice]
 
-                time_elapsed += chosen_node[1]["length"]
-                route.append(chosen_node)
+                time_elapsed += chosen_node.length
+                route.append({"start":chosen_node.name,"time_elapsed":time_elapsed})
+
 
         return route
 
 
 
 if __name__ == "__main__":
-    ski_resorts = {
-        "Val Thorens" : {
-            "Plein Sud bottom": [["Plein Sud top",{"length":10}]],
-            "Plein Sud top": [["Pionniers bottom",{"length":5}],["Pionniers top",{"length":1}]],
-            "3 Vallees bottom": [["Plein Sud bottom",{"length":15}],["3 Vallees top",{"length":6}]],
-            "3 Vallees top": [["3 Vallees bottom",{"length":5}],["Plein Sud top",{"length":4}]],
-            "Pionniers bottom": [["Plein Sud bottom",{"length":10}],["Pionniers top",{"length":4}]],
-            "Pionniers top": [["3 Vallees bottom",{"length":1}]]
-            }
-    }
+    example = ski_resorts()
+    example.add_resort("Val Thorens")
+    example.resorts["Val Thorens"].add_lift("Plein Sud bottom")
+    example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10)
+    example.resorts["Val Thorens"].add_lift("Plein Sud top")
+    example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5)
+    example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1)
+    example.resorts["Val Thorens"].add_lift("3 Vallees bottom")
+    example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15)
+    example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6)
+    example.resorts["Val Thorens"].add_lift("3 Vallees top")
+    example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5)
+    example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("Plein Sud top",4)
+    example.resorts["Val Thorens"].add_lift("Pionniers bottom")
+    example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Plein Sud bottom",10)
+    example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4)
+    example.resorts["Val Thorens"].add_lift("Pionniers top")
+    example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1)
 
-    print(Plan_route(ski_resorts["Val Thorens"],"3 Vallees top","00:11").get_route())
+    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:35").get_route())
+    #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:50")._djikstras_traversal("3 Vallees top"))
+
 
 
 
