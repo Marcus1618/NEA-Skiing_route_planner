@@ -46,12 +46,125 @@ class Plan_route():
 
         return distances, previous_node
     
+    def two_move_route(self,adjacent_nodes,time_elapsed,route):
+        priorities_for_double = []
+        for node in adjacent_nodes:
+            value = 0
+            temp_time_elapsed = time_elapsed + node.length
+            adjacent_nodes_1 = self._ski_resort[node.name].runs
+
+            for node_1 in adjacent_nodes_1:
+                value1 = value + 0
+                temp_time_elapsed1 = temp_time_elapsed + node_1.length
+                times,prev = self._djikstras_traversal(node_1.name)
+                time_from_start = times[self._start]
+                time_value = 0
+                time_value = self._length - temp_time_elapsed1 - time_from_start
+                if time_value < 0:
+                    priorities_for_double.append(time_value)
+                else:
+                    priorities_for_double.append(value1)
+
+            priorities_for_double.append(-inf)
+
+        if priorities_for_double.count(max(priorities_for_double)) == 1:
+            index_choice = priorities_for_double.index(max(priorities_for_double))
+
+            inf_num = 0
+            count = 0
+            divides = []
+            while count < index_choice:
+                value = priorities_for_double[count]
+                if value == -inf:
+                    divides.append(count)
+                    inf_num += 1
+                count += 1
+            chosen_node_1 = adjacent_nodes[inf_num]
+            adjacent_nodes_double = self._ski_resort[chosen_node_1.name].runs
+            if len(divides) == 0:
+                chosen_node_2 = adjacent_nodes_double[index_choice]
+            else:
+                chosen_node_2 = adjacent_nodes_double[index_choice - divides[-1] - 1]
+
+        else: #randomly choose between the nodes with the same priority
+            number_of_maximums = priorities_for_double.count(max(priorities_for_double))
+            choice = random.randint(1,number_of_maximums)
+            count = 0
+            for i,item in enumerate(priorities_for_double):
+                if item == max(priorities_for_double):
+                    count += 1
+                    if count == choice:
+                        index_choice = i
+                        break
+                    
+            inf_num = 0
+            count = 0
+            divides = []
+            while count < index_choice:
+                value = priorities_for_double[count]
+                if value == -inf:
+                    divides.append(count)
+                    inf_num += 1
+                count += 1
+            chosen_node_1 = adjacent_nodes[inf_num]
+            adjacent_nodes_double = self._ski_resort[chosen_node_1.name].runs
+            if len(divides) == 0:
+                chosen_node_2 = adjacent_nodes_double[index_choice]
+            else:
+                chosen_node_2 = adjacent_nodes_double[index_choice - divides[-1] - 1]
+
+        if max(priorities_for_double) >= 0: #if the two moves are viable add them to the route
+            time_elapsed += chosen_node_1.length
+            route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed})
+            self._ski_resort_object.increment_time(chosen_node_1.length)
+            time_elapsed += chosen_node_2.length
+            route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed})
+            self._ski_resort_object.increment_time(chosen_node_2.length)
+
+        return route
+    
+    def one_move_route(self,adjacent_nodes,time_elapsed,route):
+        priorities = []
+        for node in adjacent_nodes:
+            temp_time_elapsed = time_elapsed + node.length
+            times,prev = self._djikstras_traversal(node.name)
+            time_from_start = times[self._start]
+            time_value = 0
+            time_value = self._length - temp_time_elapsed - time_from_start
+            priorities.append(time_value)
+
+        if priorities.count(max(priorities)) == 1:
+            chosen_node = adjacent_nodes[priorities.index(max(priorities))]
+        else: #randomly choose between the nodes with the same priority
+            number_of_maximums = priorities.count(max(priorities))
+            choice = random.randint(1,number_of_maximums)
+            count = 0
+            for i,item in enumerate(priorities):
+                if item == max(priorities):
+                    count += 1
+                    if count == choice:
+                        index_choice = i
+                        break
+
+        chosen_node = adjacent_nodes[index_choice]
+
+        time_elapsed += chosen_node.length
+        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed})
+        self._ski_resort_object.increment_time(chosen_node.length)
+
+        return route
+
+
+
+    
 
     def get_route(self):
         time_elapsed = 0
         complete = False
         route = [{"start":self._start,"time_elapsed":0}]
         chosen_node = self._ski_resort[self._start]
+        time_before_start = 0
+        returned_to_start = True
 
         while complete == False:
             
@@ -82,84 +195,35 @@ class Plan_route():
                             values.append(value2)
                 priorities.append(max(values))
 
+            if max(priorities) == -inf:
+                if len(route) == 1: #If the route hasn't started yet
+                    time_elapsed += 1
+                    time_before_start += 1
+                
+                    
+                    #stopped by reaching a run which hasn't opened yet
+                else: #If runs are closing before the route is over
+                    continue_route = False
+                    for run in adjacent_nodes:
+                        if run.opening > self._ski_resort_object.time:
+                            continue_route = True
+                    
+                    if continue_route == True:
+                        time_elapsed += 1
+                        #add break variable for how long a pause has been taken
+                    else:
+                        route = self.two_move_route(adjacent_nodes,time_elapsed,route)
+                        route = self.one_move_route(adjacent_nodes,time_elapsed,route)
+                        complete = True #end the route generation
+                        if route[-1]["start"] != self._start:
+                            returned_to_start = False
+
+
 
             if max(priorities) < 0 and chosen_node.name == self._start:
                 
                 #No set of three moves is viable however this checks if a set of two moves is still viable
-                priorities_for_double = []
-                for node in adjacent_nodes:
-                    value = 0
-                    temp_time_elapsed = time_elapsed + node.length
-                    adjacent_nodes_1 = self._ski_resort[node.name].runs
-
-                    for node_1 in adjacent_nodes_1:
-                        value1 = value + 0
-                        temp_time_elapsed1 = temp_time_elapsed + node_1.length
-                        times,prev = self._djikstras_traversal(node_1.name)
-                        time_from_start = times[self._start]
-                        time_value = 0
-                        time_value = self._length - temp_time_elapsed1 - time_from_start
-                        if time_value < 0:
-                            priorities_for_double.append(time_value)
-                        else:
-                            priorities_for_double.append(value1)
-
-                    priorities_for_double.append(-inf)
-
-                if priorities_for_double.count(max(priorities_for_double)) == 1:
-                    index_choice = priorities_for_double.index(max(priorities_for_double))
-
-                    inf_num = 0
-                    count = 0
-                    divides = []
-                    while count < index_choice:
-                        value = priorities_for_double[count]
-                        if value == -inf:
-                            divides.append(count)
-                            inf_num += 1
-                        count += 1
-                    chosen_node_1 = adjacent_nodes[inf_num]
-                    adjacent_nodes_double = self._ski_resort[chosen_node_1.name].runs
-                    if len(divides) == 0:
-                        chosen_node_2 = adjacent_nodes_double[index_choice]
-                    else:
-                        chosen_node_2 = adjacent_nodes_double[index_choice - divides[-1] - 1]
-
-                else: #randomly choose between the nodes with the same priority
-                    number_of_maximums = priorities_for_double.count(max(priorities_for_double))
-                    choice = random.randint(1,number_of_maximums)
-                    count = 0
-                    for i,item in enumerate(priorities_for_double):
-                        if item == max(priorities_for_double):
-                            count += 1
-                            if count == choice:
-                                index_choice = i
-                                break
-                    
-                    inf_num = 0
-                    count = 0
-                    divides = []
-                    while count < index_choice:
-                        value = priorities_for_double[count]
-                        if value == -inf:
-                            divides.append(count)
-                            inf_num += 1
-                        count += 1
-                    chosen_node_1 = adjacent_nodes[inf_num]
-                    adjacent_nodes_double = self._ski_resort[chosen_node_1.name].runs
-                    if len(divides) == 0:
-                        chosen_node_2 = adjacent_nodes_double[index_choice]
-                    else:
-                        chosen_node_2 = adjacent_nodes_double[index_choice - divides[-1] - 1]
-
-                if max(priorities_for_double) >= 0: #if the two moves are viable add them to the route
-                    time_elapsed += chosen_node_1.length
-                    route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed})
-                    self._ski_resort_object.increment_time(chosen_node.length)
-                    time_elapsed += chosen_node_2.length
-                    route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed})
-                    self._ski_resort_object.increment_time(chosen_node.length)   
-
+                route = self.two_move_route(adjacent_nodes,time_elapsed,route)
                 complete = True #end the route generation
 
             elif max(priorities) < 0: #If no set of three moves is viable but the route has not returned to the start node
@@ -200,7 +264,7 @@ class Plan_route():
                 self._ski_resort_object.increment_time(chosen_node.length)
 
 
-        return route
+        return route, time_before_start, returned_to_start
 
 
 
