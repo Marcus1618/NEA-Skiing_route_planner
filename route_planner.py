@@ -176,11 +176,13 @@ class Plan_route():
                 value = 0
                 temp_time_elapsed = time_elapsed + node.length
                 adjacent_nodes_1 = self._ski_resort[node.name].runs
+                self._ski_resort_object.increment_time(node.length)
 
                 for node_1 in adjacent_nodes_1:
                     value1 = value + 0
                     temp_time_elapsed1 = temp_time_elapsed + node_1.length
                     adjacent_nodes_2 = self._ski_resort[node_1.name].runs
+                    self._ski_resort_object.increment_time(node_1.length)
 
                     for node_2 in adjacent_nodes_2:
                         value2 = value1 + 0
@@ -193,6 +195,8 @@ class Plan_route():
                             values.append(time_value)
                         else:
                             values.append(value2)
+                    self._ski_resort_object.decrement_time(node_1.length)
+                self._ski_resort_object.decrement_time(node.length)
                 priorities.append(max(values))
 
             if max(priorities) == -inf:

@@ -110,9 +110,13 @@ class Terminal(Ui):
         start_time = "00:00"
         start_time = input("At what time do you want to start your route (hh:mm): ") #ADD VALIDATION - between opening and closing times + right format
 
-        route = Plan_route(ski_resorts_data.resorts[ski_resort], start, length, start_time).get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
+        route, time_before_start, returned_to_start = Plan_route(ski_resorts_data.resorts[ski_resort], start, length, start_time).get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
+        if time_before_start > 0:
+            print(f"Your route cannot start until {self._add_times(start_time,time_before_start)} due to the opening times of the ski lifts.")
         for i in range(len(route)-1):
             print(f"{i+1}. {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self._add_times(start_time,route[i+1]['time_elapsed'])}")
+        if not returned_to_start:
+            print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
 
 
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY

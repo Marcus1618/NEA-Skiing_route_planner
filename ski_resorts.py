@@ -47,6 +47,21 @@ class ski_resort():
         self._time = f"{hours}:{mins}"
         self.check_open()
     
+    def decrement_time(self,mins):
+        h1, m1 = self._time.split(":")
+        mins = int(m1) - mins
+        hours = int(h1) + mins // 60
+        if mins < 0:
+            mins += 60
+        if hours < 0:
+            hours += 24
+        if len(str(hours)) == 1:
+            hours = f"0{hours}"
+        if len(str(mins)) == 1:
+            mins = f"0{mins}"
+        self._time = f"{hours}:{mins}"
+        self.check_open()
+    
     def check_open(self):
         for lift in self.__nodes.values():
             for run in lift.runs:
