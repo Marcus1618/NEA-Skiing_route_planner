@@ -1,4 +1,5 @@
 from math import inf
+import math
 
 class ski_resorts():
     def __init__(self):
@@ -34,38 +35,63 @@ class ski_resort():
         self._time = time
 
     def increment_time(self,mins):
-        h1, m1 = self._time.split(":")
-        mins = int(m1) + mins
-        hours = int(h1) + mins // 60
-        mins = mins % 60
-        if hours > 23:
-            hours %= 24
-        if len(str(hours)) == 1:
-            hours = f"0{hours}"
-        if len(str(mins)) == 1:
-            mins = f"0{mins}"
-        self._time = f"{hours}:{mins}"
-        self.check_open()
+        if mins > 0 and mins != inf:
+            h1, m1 = self._time.split(":")
+            mins = int(m1) + mins
+            hours = int(h1) + mins // 60
+            mins = mins % 60
+            if hours > 23:
+                hours %= 24
+            if len(str(hours)) == 1:
+                hours = f"0{hours}"
+            if len(str(mins)) == 1:
+                mins = f"0{mins}"
+            self._time = f"{hours}:{mins}"
+            self.check_open()
+
     
     def decrement_time(self,mins):
-        h1, m1 = self._time.split(":")
-        mins = int(m1) - mins
-        hours = int(h1) + mins // 60
-        if mins < 0:
-            mins += 60
-        if hours < 0:
-            hours += 24
-        if len(str(hours)) == 1:
-            hours = f"0{hours}"
-        if len(str(mins)) == 1:
-            mins = f"0{mins}"
-        self._time = f"{hours}:{mins}"
-        self.check_open()
+        if mins > 0 and mins != inf:
+            h1, m1 = self._time.split(":")
+            mins = int(m1) - mins
+            hours = math.ceil(int(h1) - mins / 60)
+            while mins < 0:
+                mins += 60
+            while hours < 0:
+                hours += 24
+            if len(str(hours)) == 1:
+                hours = f"0{hours}"
+            if len(str(mins)) == 1:
+                mins = f"0{mins}"
+            self._time = f"{hours}:{mins}"
+            self.check_open()
+    
+    def compare_greater(self,t1,t2):
+        #Is time t1 greater than time t2
+        h1, m1 = t1.split(":")
+        h2, m2 = t2.split(":")
+        if int(h1) > int(h2):
+            return True
+        elif int(h1) == int(h2) and int(m1) > int(m2):
+            return True
+        else:
+            return False
+    
+    def compare_greater_or_equal(self,t1,t2):
+        #Is time t1 greater than or equal to time t2
+        h1, m1 = t1.split(":")
+        h2, m2 = t2.split(":")
+        if int(h1) > int(h2):
+            return True
+        elif int(h1) == int(h2) and int(m1) >= int(m2):
+            return True
+        else:
+            return False
     
     def check_open(self):
         for lift in self.__nodes.values():
             for run in lift.runs:
-                if self._time < run.opening or self._time >= run.closing:
+                if self.compare_greater(run.opening, self._time) or self.compare_greater_or_equal(self._time, run.closing):
                     run.length = inf
                 else:
                     run.length = run.open_length
