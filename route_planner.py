@@ -12,11 +12,20 @@ class Plan_route():
         self._ski_resort_object.time = start_time
         self._ski_resort_object.check_open()
 
-
-
     def _hours_to_minutes(self,time):
         h,m = time.split(":")
         return int(h)*60 + int(m)
+    
+    def compare_greater(self,t1,t2):
+        #Is time t1 greater than time t2
+        h1, m1 = t1.split(":")
+        h2, m2 = t2.split(":")
+        if int(h1) > int(h2):
+            return True
+        elif int(h1) == int(h2) and int(m1) > int(m2):
+            return True
+        else:
+            return False
 
     def _djikstras_traversal(self,start,time_update=False):
         queue = PriorityQueue()
@@ -50,7 +59,7 @@ class Plan_route():
 
         return distances, previous_node
     
-    def two_move_route(self,adjacent_nodes,time_elapsed,route, due_to_closing):
+    def two_move_route(self,adjacent_nodes,time_elapsed,route, due_to_closing=False):
         priorities_for_double = []
         for node in adjacent_nodes:
             value = 0
@@ -137,9 +146,10 @@ class Plan_route():
 
         chosen_node = adjacent_nodes[index_choice]
 
-        time_elapsed += chosen_node.length
-        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False})
-        self._ski_resort_object.increment_time(chosen_node.length)
+        if max(priorities) >= 0:
+            time_elapsed += chosen_node.length
+            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False})
+            self._ski_resort_object.increment_time(chosen_node.length)
 
         return route
 
@@ -184,7 +194,12 @@ class Plan_route():
                 priorities.append(max(values))
 
             if max(priorities) == -inf:
-                if len(route) == 1: #If the route hasn't started yet
+                continue_route = False
+                for run in adjacent_nodes:
+                    if self.compare_greater(run.opening, self._ski_resort_object.time):
+                        continue_route = True
+
+                if len(route) == 1 and continue_route == True: #If the route hasn't started yet
                     time_elapsed += 1
                     self._ski_resort_object.increment_time(1)
                     if route[-1]["pause"] == False:
@@ -194,10 +209,6 @@ class Plan_route():
                     self._length += 1 #Length of the route is increased by 1 minute to account for the time spent waiting for the ski lifts to open
                 
                 else: #If the route is stopped by reaching unopened runs
-                    continue_route = False
-                    for run in adjacent_nodes:
-                        if run.opening > self._ski_resort_object.time:
-                            continue_route = True
                     
                     if continue_route == True: #If the route can continue since the surrounding runs are yet to open
                         time_elapsed += 1
@@ -220,8 +231,7 @@ class Plan_route():
             elif max(priorities) < 0 and chosen_node.name == self._start:
                 
                 #No set of three moves is viable however this checks if a set of two moves is still viable
-                due_to_closing = False
-                route = self.two_move_route(adjacent_nodes,time_elapsed,route,due_to_closing)
+                route = self.two_move_route(adjacent_nodes,time_elapsed,route)
                 complete = True #end the route generation
 
             elif max(priorities) < 0: #If no set of three moves is viable but the route has not returned to the start node
@@ -240,6 +250,9 @@ class Plan_route():
                     if run_length != inf:
                         time_elapsed += run_length
                         route.append({"start":route_to_finish[i+1],"time_elapsed":time_elapsed,"pause":False})
+
+                route = self.two_move_route(adjacent_nodes,time_elapsed,route)
+                route = self.one_move_route(adjacent_nodes,time_elapsed,route)
 
                 complete = True
             
