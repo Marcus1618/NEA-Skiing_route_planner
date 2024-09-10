@@ -143,8 +143,7 @@ class Plan_route():
                     if count == choice:
                         index_choice = i
                         break
-
-        chosen_node = adjacent_nodes[index_choice]
+            chosen_node = adjacent_nodes[index_choice]
 
         if max(priorities) >= 0:
             time_elapsed += chosen_node.length
@@ -159,6 +158,7 @@ class Plan_route():
         route = [{"start":self._start,"time_elapsed":0,"pause":False}]
         chosen_node = self._ski_resort[self._start]
         returned_to_start = True
+        previous_route_length = self._length
 
         while complete == False:
             
@@ -189,23 +189,38 @@ class Plan_route():
                             values.append(time_value)
                         else:
                             values.append(value2)
+                        print(node_2.name)
                     self._ski_resort_object.decrement_time(node_1.length)
                 self._ski_resort_object.decrement_time(node.length)
                 priorities.append(max(values))
+                print(node.name,values,max(values))
+
 
             if max(priorities) == -inf:
                 continue_route = False
-                for run in adjacent_nodes:
-                    if self.compare_greater(run.opening, self._ski_resort_object.time):
-                        continue_route = True
+                for run in adjacent_nodes: #Determines if there is a 3 move route  that will be able to be taken in the future
+                    if self.compare_greater(run.opening, self._ski_resort_object.time) or (self.compare_greater(self._ski_resort_object.time, run.opening) and self.compare_greater(run.closing, self._ski_resort_object.time)):
+                        adjacent_nodes_1 = self._ski_resort[run.name].runs
+                        for run_1 in adjacent_nodes_1:
+                            if self.compare_greater(run_1.opening, self._ski_resort_object.time) or (self.compare_greater(self._ski_resort_object.time, run.opening) and self.compare_greater(run.closing, self._ski_resort_object.time)):
+                                adjacent_nodes_2 = self._ski_resort[run_1.name].runs
+                                for run_2 in adjacent_nodes_2:
+                                    if self.compare_greater(run_2.opening, self._ski_resort_object.time) or (self.compare_greater(self._ski_resort_object.time, run.opening) and self.compare_greater(run.closing, self._ski_resort_object.time)):
+                                        continue_route = True
+                                        break
+                                if continue_route == True:
+                                    break
+                        if continue_route == True:
+                            break         
 
-                if len(route) == 1 and continue_route == True: #If the route hasn't started yet
+                if (len(route) == 1 or previous_route_length + 1 == self._length) and continue_route == True: #If the route hasn't started yet
                     time_elapsed += 1
                     self._ski_resort_object.increment_time(1)
                     if route[-1]["pause"] == False:
                         route.append({"start":chosen_node.name,"time_elapsed":1,"pause":True})
                     else:
                         route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
+                    previous_route_length = self._length
                     self._length += 1 #Length of the route is increased by 1 minute to account for the time spent waiting for the ski lifts to open
                 
                 else: #If the route is stopped by reaching unopened runs

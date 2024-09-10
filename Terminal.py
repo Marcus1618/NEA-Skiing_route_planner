@@ -121,7 +121,6 @@ class Terminal(Ui):
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
 
-
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
         option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
         if option == "m":
