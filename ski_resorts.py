@@ -1,26 +1,26 @@
 from math import inf
 import math
 
-class ski_resorts():
+class Ski_resorts():
     def __init__(self):
         self.__resorts = {}
     
     def add_resort(self,name):
-        self.__resorts[name] = ski_resort(name)
+        self.__resorts[name] = Ski_resort(name)
     
     @property
     def resorts(self):
         return self.__resorts
 
 
-class ski_resort():
+class Ski_resort():
     def __init__(self,name):
         self.__name = name
         self.__nodes = {}
         self._time = "00:00"
     
     def add_lift(self,name):
-        self.__nodes[name] = ski_lift(name)
+        self.__nodes[name] = Ski_node(name)
     
     @property
     def nodes(self):
@@ -97,7 +97,7 @@ class ski_resort():
                     run.length = run.open_length
 
     
-class node(): #Make abstract methods
+class Node(): #Make abstract methods
     def __init__(self):
         pass
 
@@ -107,13 +107,13 @@ class node(): #Make abstract methods
     def remove(self):
         pass
 
-class ski_lift(node):
+class Ski_node(Node):
     def __init__(self,name):
         self._name = name
         self._runs = []
     
     def add_run(self,name,length,opening,closing):
-        self._runs.append(run(name,length,opening,closing))
+        self._runs.append(Run(name,length,opening,closing))
     
     @property
     def runs(self):
@@ -123,7 +123,7 @@ class ski_lift(node):
     def name(self):
         return self._name
     
-class run():
+class Run():
     def __init__(self,name,length,opening,closing):
         self._name = name
         self._length = length
@@ -158,8 +158,8 @@ class run():
 
 
 #Do these later
-class ski_park(node):
+class Ski_park(Node):
     pass
 
-class amenity(node):
+class Amenity(Node):
     pass

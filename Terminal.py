@@ -1,7 +1,7 @@
 from Ui import Ui
 from route_planner import Plan_route
 import re
-from ski_resorts import ski_resorts, ski_resort, ski_lift, run
+from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 
 """ski_resorts = {
     "Val Thorens" : {
@@ -67,7 +67,7 @@ class Terminal(Ui):
         return f"{hours}:{mins}"
     
     def _construct_example_ski_resort(self):
-        example = ski_resorts()
+        example = Ski_resorts()
         example.add_resort("Val Thorens")
         example.resorts["Val Thorens"].add_lift("Plein Sud bottom")
         example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00")
