@@ -110,7 +110,8 @@ class Terminal(Ui):
         start_time = "00:00"
         start_time = input("At what time do you want to start your route (hh:mm): ") #ADD VALIDATION - between opening and closing times + right format
 
-        route, returned_to_start = Plan_route(ski_resorts_data.resorts[ski_resort], start, length, start_time).get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
+        route_planning = Plan_route(ski_resorts_data.resorts[ski_resort], start, length, start_time)
+        route, returned_to_start = route_planning.get_route() #Returns a list of dictionaries containing the node moved to and the time elapsed
 
         for i in range(len(route)-1):
             if route[i+1]["pause"] == True:

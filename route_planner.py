@@ -28,7 +28,8 @@ class Plan_route():
             return False
 
     def _dijkstras_traversal(self,start,time_independent):
-        queue = PriorityQueue()
+        node_number = self._ski_resort_object.node_number()
+        queue = Priority_queue(node_number)
         keys = (self._ski_resort.keys())
         values = (inf for i in range(len(self._ski_resort)))
         distances = dict(zip(keys,values))
@@ -36,11 +37,11 @@ class Plan_route():
         previous_node = dict()
 
         distances[start] = 0
-        queue.put((0,start))
+        queue.enQueue((0,start))
 
-        while not queue.empty():
+        while not queue.isEmpty():
             #BFS algorithm with priority queue of (distance,node) tuple
-            dist, v = queue.get()
+            dist, v = queue.deQueue()
 
             if v in visited:
                 continue
@@ -54,14 +55,14 @@ class Plan_route():
                     distances[edge.name] = min(edge.length+dist,distances[edge.name])
                     if edge.length+dist <= distances[edge.name]:
                         previous_node[edge.name] = v
-                    queue.put((distances[edge.name],edge.name))
+                    queue.enQueue((distances[edge.name],edge.name))
                     if time_independent:
                         edge.length = inf
             self._ski_resort_object.decrement_time(dist)
 
         return distances, previous_node
     
-    def two_move_route(self,adjacent_nodes,time_elapsed,route, due_to_closing=False):
+    def two_move_route(self,adjacent_nodes,time_elapsed,route):
         priorities_for_double = []
         for node in adjacent_nodes:
             value = 0
@@ -77,13 +78,10 @@ class Plan_route():
                 time_from_start = times[self._start]
                 time_value = 0
                 time_value = self._length - temp_time_elapsed1 - time_from_start
-                if due_to_closing:
+                if time_value < 0:
                     single_priorities.append(time_value)
                 else:
-                    if time_value < 0:
-                        single_priorities.append(time_value)
-                    else:
-                        single_priorities.append(value1)
+                    single_priorities.append(value1)
 
             priorities_for_double.append(single_priorities)
             self._ski_resort_object.decrement_time(node.length)
@@ -216,7 +214,7 @@ class Plan_route():
                                     break
                         if continue_route == True:
                             break         
-
+                
                 if (len(route) == 1 or previous_route_length + 1 == self._length) and continue_route == True: #If the route hasn't started yet
                     time_elapsed += 1
                     self._ski_resort_object.increment_time(1)
@@ -238,7 +236,6 @@ class Plan_route():
                             route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
 
                     else: #If the route cannot continue
-                        due_to_closing = True
 
                         times,previous_node = self._dijkstras_traversal(chosen_node.name, False)
                 
@@ -248,7 +245,7 @@ class Plan_route():
                         while current != chosen_node.name:
                             current = previous_node[current]
                             route_to_finish.insert(0,current)
-                
+                        
                         for i in range(len(route_to_finish)-1):
                             run_length = self._ski_resort[route_to_finish[i]].runs[[run.name for run in self._ski_resort[route_to_finish[i]].runs].index(route_to_finish[i+1])].length
                             if run_length != inf:
@@ -256,7 +253,7 @@ class Plan_route():
                                 route.append({"start":route_to_finish[i+1],"time_elapsed":time_elapsed,"pause":False})
                             else:
                                 break
-                        
+
                         complete = True #end the route generation
                         if route[-1]["start"] != self._start:
                             returned_to_start = False
@@ -312,6 +309,40 @@ class Plan_route():
         return route, returned_to_start
 
 
+class Priority_queue():
+    def __init__(self,n):
+        self._max_length = (0.5*n**2)-(1.5*n)+2
+        self._queue = [(0,"") for i in range(int(self._max_length))]
+        self._front = 0
+        self._rear = -1
+        self._size = 0
+
+    def enQueue(self,item): #item is a tuple of (distance,node name)
+        if self.isFull():
+            print("Queue is full")
+        self._rear = int((self._rear + 1) % self._max_length)
+        self._queue[self._rear] = item
+        self._size += 1
+        #priority shift
+        counter = self._rear
+        while self._queue[counter][0] > self._queue[int((counter-1)%self._max_length)][0] and counter != self._front:
+            self._queue[counter],self._queue[counter-1] = self._queue[counter-1],self._queue[counter]
+            counter = int((counter-1)%self._max_length)
+
+    def deQueue(self):
+        if self.isEmpty():
+            print("Queue is empty")
+            return None
+        data_item = self._queue[self._front]
+        self._front = int((self._front + 1) % self._max_length)
+        self._size -= 1
+        return data_item
+    
+    def isEmpty(self):
+        return self._size == 0
+    
+    def isFull(self):
+        return self._size == self._max_length
 
 if __name__ == "__main__":
     example = Ski_resorts()
@@ -333,7 +364,8 @@ if __name__ == "__main__":
     example.resorts["Val Thorens"].add_lift("Pionniers top")
     example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
-    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","07:00").get_route())
+    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","09:00").get_route())
+    #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","07:00").get_route())
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:50")._djikstras_traversal("3 Vallees top"))
 
 
@@ -343,4 +375,3 @@ if __name__ == "__main__":
 
 
 
-#Create my own priority queue class

@@ -33,6 +33,9 @@ class Ski_resort():
     @time.setter
     def time(self,time):
         self._time = time
+    
+    def node_number(self):
+        return len(self.__nodes)
 
     def increment_time(self,mins):
         if mins > 0 and mins != inf:
