@@ -1,3 +1,4 @@
+#Old main loop
 adjacent_nodes = self._ski_resort[chosen_node.name].runs
 priorities = []
 

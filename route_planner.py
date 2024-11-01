@@ -159,6 +159,7 @@ class Plan_route():
     
     def fastest_route_back(self, chosen_node,time_elapsed,route):
         times,previous_node = self._dijkstras_traversal(chosen_node.name, False)
+        print(times,previous_node)
                 
         route_to_finish = []
         current = self._start
@@ -171,12 +172,49 @@ class Plan_route():
             run_length = (self._ski_resort[route_to_finish[i]].runs[[run.name for run in self._ski_resort[route_to_finish[i]].runs].index(route_to_finish[i+1])]).length
             if run_length != inf:
                 time_elapsed += run_length
+                self._ski_resort_object.increment_time(run_length)
                 route.append({"start":route_to_finish[i+1],"time_elapsed":time_elapsed,"pause":False})
             else:
                 break
 
         return route
 
+    def _find_values(self,adjacent_nodes,count,temp_time_elapsed, priorities, value, values):
+        if count >= 2:
+            for node_1 in adjacent_nodes:
+                temp_time_elapsed += node_1.length
+                times, prev = self._dijkstras_traversal(node_1.name, False)
+                time_from_start = times[self._start]
+                time_value = 0
+                time_value = self._length - temp_time_elapsed - time_from_start
+                node_value = 0 #generate value
+                value += node_value
+                if time_value < 0:
+                    values.append(time_value)
+                else:
+                    values.append(value)
+                temp_time_elapsed -= node_1.length
+                value -= 0 #generate value
+            count -= 1
+            return priorities, values, count
+        for node in adjacent_nodes:
+            if count == 0:
+                values = []
+            count += 1
+            temp_time_elapsed += node.length
+            self._ski_resort_object.increment_time(node.length)
+            node_value = 0 #generate value
+            value += node_value
+            priorities,values,count = self._find_values(self._ski_resort[node.name].runs, count, temp_time_elapsed, priorities, value, values)
+            value -= node_value
+            self._ski_resort_object.decrement_time(node.length)
+            temp_time_elapsed -= node.length
+            if count == 0:
+                priorities.append(max(values))
+
+        count -= 1
+        return priorities, values, count
+    
     def get_route(self):
         time_elapsed = 0
         complete = False
@@ -186,37 +224,14 @@ class Plan_route():
         previous_route_length = self._length
 
         while complete == False:
-            
+
+            find_priorities = []
             adjacent_nodes = self._ski_resort[chosen_node.name].runs
-            priorities = []
-
-            for node in adjacent_nodes:
-                value = 0
-                values = []
-                temp_time_elapsed = time_elapsed + node.length
-                adjacent_nodes_1 = self._ski_resort[node.name].runs
-                self._ski_resort_object.increment_time(node.length)
-
-                for node_1 in adjacent_nodes_1:
-                    value1 = value + 0
-                    temp_time_elapsed1 = temp_time_elapsed + node_1.length
-                    adjacent_nodes_2 = self._ski_resort[node_1.name].runs
-                    self._ski_resort_object.increment_time(node_1.length)
-
-                    for node_2 in adjacent_nodes_2:
-                        value2 = value1 + 0
-                        temp_time_elapsed2 = temp_time_elapsed1 + node_2.length
-                        times,prev = self._dijkstras_traversal(node_2.name, False)
-                        time_from_start = times[self._start]
-                        time_value = 0
-                        time_value = self._length - temp_time_elapsed2 - time_from_start
-                        if time_value < 0:
-                            values.append(time_value)
-                        else:
-                            values.append(value2)
-                    self._ski_resort_object.decrement_time(node_1.length)
-                self._ski_resort_object.decrement_time(node.length)
-                priorities.append(max(values))
+            count = 0
+            temp_time_elapsed = time_elapsed
+            value = 0
+            values = []
+            priorities, values, count = self._find_values(adjacent_nodes,count,temp_time_elapsed, find_priorities, value, values)
 
             if max(priorities) == -inf:
                 continue_route = False
@@ -273,6 +288,7 @@ class Plan_route():
             elif max(priorities) < 0: #If no set of three moves is viable but the route has not returned to the start node
                 print("Priorities < 0")
                 print(priorities)
+                print(route)
                 route = self.fastest_route_back(chosen_node,time_elapsed,route)
 
                 complete = True
@@ -356,7 +372,7 @@ if __name__ == "__main__":
     example.resorts["Val Thorens"].add_lift("Pionniers top")
     example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
-    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","09:00").get_route())
+    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","15:35").get_route())
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","07:00").get_route())
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:50","8:15")._dijkstras_traversal("Plein Sud bottom",False))
 
