@@ -56,11 +56,11 @@ class Ski_resort():
     def decrement_time(self,mins):
         if mins > 0 and mins != inf:
             h1, m1 = self._time.split(":")
-            mins = int(m1) - mins
-            hours = math.ceil(int(h1) - mins / 60)
-            while mins < 0:
+            hours = int(h1) - math.ceil((mins-int(m1)) / 60)
+            mins = int(m1) - mins % 60
+            if mins < 0:
                 mins += 60
-            while hours < 0:
+            if hours < 0:
                 hours += 24
             if len(str(hours)) == 1:
                 hours = f"0{hours}"
