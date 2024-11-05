@@ -228,7 +228,7 @@ class Plan_route():
         count -= 1
         return priorities, values, count
     
-    def get_route(self):
+    def get_route(self, as_close_to_time):
         time_elapsed = 0
         complete = False
         route = [{"start":self._start,"time_elapsed":0,"pause":False}]
@@ -299,13 +299,32 @@ class Plan_route():
 
                 elif max(priorities) != -inf: #get as far back to the starting node as possible
                     #delete last move in route
-                    route = self.fastest_route_back(chosen_node,time_elapsed,route)
+                    route_without_delete = self.fastest_route_back(chosen_node,time_elapsed,route)
+
+                    if len(route) > 1:
+                        if route[-1]["pause"] == True:
+                            route[-1]["time_elapsed"] = route[-1]["time_elapsed"] - 1
+                        else:
+                            route.pop()
+                            time_elapsed = route[-1]["time_elapsed"]
+                            chosen_node = self._ski_resort[route[-1]["start"]]
+                    route_with_delete = self.fastest_route_back(chosen_node,time_elapsed,route)
+
+                    if as_close_to_time:
+                        route_without_delete_time_away = abs(route_without_delete[-1]["time_elapsed"] - self._length)
+                        route_with_delete_time_away = abs(route_with_delete[-1]["time_elapsed"] - self._length)
+                        if route_without_delete_time_away <= route_with_delete_time_away:
+                            route = route_without_delete
+                        elif route_without_delete_time_away > route_with_delete_time_away:
+                            route = route_with_delete
+                    else:
+                        route = route_with_delete
 
                     complete = True
                     if route[-1]["start"] != self._start:
                         returned_to_start = False
 
-                elif (len(route) == 1 or previous_route_length + 1 == self._length) and continue_route == True and time_value < 0: #If the route hasn't started yet
+                elif (len(route) == 1 or previous_route_length + 1 == self._length) and continue_route == True and time_value >= 0: #If the route hasn't started yet
                     time_elapsed += 1
                     self._ski_resort_object.increment_time(1)
                     if route[-1]["pause"] == False:
@@ -316,21 +335,40 @@ class Plan_route():
                     self._length += 1 #Length of the route is increased by 1 minute to account for the time spent waiting for the ski lifts to open
                 
                 #If the route is stopped by reaching unopened runs               
-                elif continue_route == True and time_value < 0: #If the route can continue since the surrounding runs are yet to open
-                        time_elapsed += 1
-                        self._ski_resort_object.increment_time(1)
-                        if route[-1]["pause"] == False:
-                            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":True})
-                        else:
-                            route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
+                elif continue_route == True and time_value >= 0: #If the route can continue since the surrounding runs are yet to open
+                    time_elapsed += 1
+                    self._ski_resort_object.increment_time(1)
+                    if route[-1]["pause"] == False:
+                        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":True})
+                    else:
+                        route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
 
                 else: #If the route cannot continue
-                        #Delete last move in route
-                        route = self.fastest_route_back(chosen_node,time_elapsed,route)
+                    #Delete last move in route
+                    route_without_delete = self.fastest_route_back(chosen_node,time_elapsed,route)
 
-                        complete = True #end the route generation
-                        if route[-1]["start"] != self._start:
-                            returned_to_start = False
+                    if len(route) > 1:
+                        if route[-1]["pause"] == True:
+                            route[-1]["time_elapsed"] = route[-1]["time_elapsed"] - 1
+                        else:
+                            route.pop()
+                            time_elapsed = route[-1]["time_elapsed"]
+                            chosen_node = self._ski_resort[route[-1]["start"]]
+                    route_with_delete = self.fastest_route_back(chosen_node,time_elapsed,route)
+
+                    if as_close_to_time:
+                        route_without_delete_time_away = abs(route_without_delete[-1]["time_elapsed"] - self._length)
+                        route_with_delete_time_away = abs(route_with_delete[-1]["time_elapsed"] - self._length)
+                        if route_without_delete_time_away <= route_with_delete_time_away:
+                            route = route_without_delete
+                        elif route_without_delete_time_away > route_with_delete_time_away:
+                            route = route_with_delete
+                    else:
+                        route = route_with_delete
+
+                    complete = True #end the route generation
+                    if route[-1]["start"] != self._start:
+                        returned_to_start = False
 
             elif max(priorities) < 0 and chosen_node.name == self._start:
                 
@@ -340,7 +378,26 @@ class Plan_route():
 
             elif max(priorities) < 0: #If no set of three moves is viable but the route has not returned to the start node
                 #Delete last move in route
-                route = self.fastest_route_back(chosen_node,time_elapsed,route)
+                route_without_delete = self.fastest_route_back(chosen_node,time_elapsed,route)
+
+                if len(route) > 1:
+                    if route[-1]["pause"] == True:
+                        route[-1]["time_elapsed"] = route[-1]["time_elapsed"] - 1
+                    else:
+                        route.pop()
+                        time_elapsed = route[-1]["time_elapsed"]
+                        chosen_node = self._ski_resort[route[-1]["start"]]
+                route_with_delete = self.fastest_route_back(chosen_node,time_elapsed,route)
+
+                if as_close_to_time:
+                    route_without_delete_time_away = abs(route_without_delete[-1]["time_elapsed"] - self._length)
+                    route_with_delete_time_away = abs(route_with_delete[-1]["time_elapsed"] - self._length)
+                    if route_without_delete_time_away <= route_with_delete_time_away:
+                        route = route_without_delete
+                    elif route_without_delete_time_away > route_with_delete_time_away:
+                        route = route_with_delete
+                else:
+                    route = route_with_delete
 
                 complete = True
                 if route[-1]["start"] != self._start:
@@ -423,7 +480,7 @@ if __name__ == "__main__":
     example.resorts["Val Thorens"].add_lift("Pionniers top")
     example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
-    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:25","07:30").get_route())
+    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","01:09","10:00").get_route(True))
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","07:00").get_route())
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:50","8:15")._dijkstras_traversal("Plein Sud bottom",False))
 
