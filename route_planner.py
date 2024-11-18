@@ -34,6 +34,20 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             return True
         else:
             return False
+    
+    def _add_times(self, t1, t2):
+        h1, m1 = t1.split(":")
+        m2 = t2
+        mins = int(m1) + int(m2)
+        hours = int(h1) + mins // 60
+        mins = mins % 60
+        if hours > 23:
+            hours %= 24
+        if len(str(hours)) == 1:
+            hours = f"0{hours}"
+        if len(str(mins)) == 1:
+            mins = f"0{mins}"
+        return f"{hours}:{mins}"
 
     def _dijkstras_traversal(self,start,time_independent): #Dijkstra's algorithm to find the shortest path from a node in the graph to all of the other nodes
         node_number = self._ski_resort_object.node_number()
@@ -217,16 +231,16 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         continue_route = False
         for run in adjacent_nodes: #Iterating through the adjacent nodes to see if there are three nodes in a sequence that are all either open or will be open in the future
             if self.compare_greater(run.opening, self._ski_resort_object.time) or (self.compare_greater_or_equal(self._ski_resort_object.time, run.opening) and self.compare_greater(run.closing, self._ski_resort_object.time)):
-                min_time = run.opening + run.length
+                min_time = self._add_times(run.opening, run.open_length)
                 max_time = run.closing
                 adjacent_nodes_1 = self._ski_resort[run.name].runs
                 for run_1 in adjacent_nodes_1:
                     if (self.compare_greater(run_1.opening, min_time) and self.compare_greater(max_time, run_1.opening)) or (self.compare_greater_or_equal(min_time, run_1.opening) and self.compare_greater(run_1.closing, min_time)):
-                        min_time_1 = min_time + run_1.length
+                        min_time_1 = self._add_times(min_time, run_1.open_length)
                         max_time_1 = max_time
-                        if run_1.opening + run_1.length > min_time_1:
-                            min_time_1 = run_1.opening + run_1.length
-                        if run_1.closing < max_time_1:
+                        if self.compare_greater(self._add_times(run_1.opening, run_1.open_length), min_time_1):
+                            min_time_1 = self._add_times(run_1.opening, run_1.open_length)
+                        if self.compare_greater_or_equal(max_time_1, run_1.closing):
                             max_time_1 = run_1.closing
                         adjacent_nodes_2 = self._ski_resort[run_1.name].runs
                         for run_2 in adjacent_nodes_2:
@@ -429,23 +443,23 @@ class Priority_queue(): #Implementation of a circular, priority queue using a st
 if __name__ == "__main__":
     example = Ski_resorts()
     example.add_resort("Val Thorens")
-    example.resorts["Val Thorens"].add_lift("Plein Sud bottom")
+    example.resorts["Val Thorens"].add_ski_node("Plein Sud bottom")
     example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00")
-    example.resorts["Val Thorens"].add_lift("Plein Sud top")
+    example.resorts["Val Thorens"].add_ski_node("Plein Sud top")
     example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5, "00:00", "23:59")
     example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1, "00:00", "23:59")
-    example.resorts["Val Thorens"].add_lift("3 Vallees bottom")
+    example.resorts["Val Thorens"].add_ski_node("3 Vallees bottom")
     example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15, "00:00", "23:59")
     example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6, "08:30", "16:00")
-    example.resorts["Val Thorens"].add_lift("3 Vallees top")
+    example.resorts["Val Thorens"].add_ski_node("3 Vallees top")
     example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5, "00:00", "23:59")
     example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("Plein Sud top",4, "00:00", "23:59")
-    example.resorts["Val Thorens"].add_lift("Pionniers bottom")
+    example.resorts["Val Thorens"].add_ski_node("Pionniers bottom")
     example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Plein Sud bottom",10, "00:00", "23:59")
     example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4, "08:00", "16:30")
-    example.resorts["Val Thorens"].add_lift("Pionniers top")
+    example.resorts["Val Thorens"].add_ski_node("Pionniers top")
     example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
-    print(Plan_route(example.resorts["Val Thorens"],"3 Vallees bottom","00:41","10:00").get_route(False))
+    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","00:53","07:00").get_route(False))
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","07:00").get_route())
     #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:50","8:15")._dijkstras_traversal("Plein Sud bottom",False))

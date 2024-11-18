@@ -19,7 +19,7 @@ class Ski_resort():
         self.__nodes = {}
         self._time = "00:00"
     
-    def add_lift(self,name):
+    def add_ski_node(self,name):
         self.__nodes[name] = Ski_node(name)
     
     @property
@@ -101,20 +101,10 @@ class Ski_resort():
 
     
 class Node(): #Make abstract methods
-    def __init__(self):
-        pass
-
-    def add(self):
-        pass
-
-    def remove(self):
-        pass
-
-class Ski_node(Node):
     def __init__(self,name):
         self._name = name
         self._runs = []
-    
+
     def add_run(self,name,length,opening,closing):
         self._runs.append(Run(name,length,opening,closing))
     
@@ -125,6 +115,13 @@ class Ski_node(Node):
     @property
     def name(self):
         return self._name
+
+    def remove(self):
+        pass
+
+class Ski_node(Node):
+    def __init__(self,name):
+        super().__init__(name)
     
 class Run():
     def __init__(self,name,length,opening,closing):
@@ -162,7 +159,9 @@ class Run():
 
 #Do these later
 class Ski_park(Node):
-    pass
+    def __init__(self,name):
+        super().__init__(name)
 
 class Amenity(Node):
-    pass
+    def __init__(self,name):
+        super().__init__(name)
