@@ -17,6 +17,7 @@ from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 class Terminal(Ui):
     def __init__(self):
             self.saved_ski_resorts = Ski_resorts() #change this so that it load from database
+            self._construct_example_ski_resort()
 
     def menu(self):
         option = "-1"
@@ -81,8 +82,6 @@ class Terminal(Ui):
         self.saved_ski_resorts.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
     def generate_route(self):
-        self._construct_example_ski_resort()
-
         length = "0.00"
         valid = None
         while valid == None:
@@ -136,16 +135,24 @@ class Terminal(Ui):
             if create_node == "y":
                 node_name = ""
                 while node_name in self.saved_ski_resorts.resorts[ski_resort_name].nodes or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
-                    node_name = input("Enter the name of the ski lift station: ")
+                    if len(self.saved_ski_resorts.resorts[ski_resort_name].nodes) == 0:
+                        node_name = input(f"Enter the name of the ski lift station: (No previously created stations)\n")
+                    else:
+                        node_name = input(f"Enter the name of the ski lift station: (Previously created ski lift stations: {', '.join(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})\n")
                 self.saved_ski_resorts.resorts[ski_resort_name].add_ski_node(node_name)
                 creating_run = "y"
                 while creating_run == "y":
                     run_name = ""
-                    while run_name in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
-                        run_name = input(f"Enter an end ski lift station of this run: (Previously created stations: {', '.join(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})\n")
+                    while run_name in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
+                        run_names_excluding_node = list(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
+                        run_names_excluding_node.remove(node_name)
+                        if len(run_names_excluding_node) == 0:
+                            run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")   
+                        else:
+                            run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
                     length = input("Enter the length of the run (minutes): ") #Validation
                     opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                    closing = input("Enter the closing time of the run (hh:mm): ") #Validation
+                    closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
                     self.saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing)
                     creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added tjo each ski lift station
             elif create_node == "n":
@@ -153,6 +160,7 @@ class Terminal(Ui):
         
         #Check if any ski lift stations have been used as the end of a run but have not been created
         incomplete_nodes = True
+        break_loop = False
         while incomplete_nodes:
             for node in self.saved_ski_resorts.resorts[ski_resort_name].nodes: #node is a string of the name of the ski lift station
                 for run in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs: #run is the run object
@@ -162,8 +170,13 @@ class Terminal(Ui):
                         creating_run = "y"
                         while creating_run == "y":
                             run_name = ""
-                            while run_name in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
-                                run_name = input(f"Enter an end ski lift station of this run: (Previously created stations: {', '.join(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})\n")
+                            while run_name in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
+                                run_names_excluding_node = list(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
+                                run_names_excluding_node.remove(node)
+                                if len(run_names_excluding_node) == 0:
+                                    run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")   
+                                else:
+                                    run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
                             length = input("Enter the length of the run (minutes): ") #Validation
                             opening = input("Enter the opening time of the run (hh:mm): ") #Validation
                             closing = input("Enter the closing time of the run (hh:mm): ") #Validation
@@ -181,7 +194,6 @@ class Terminal(Ui):
                     if run.name not in self.saved_ski_resorts.resorts[ski_resort_name].nodes:
                         incomplete_nodes = True
 
-        #can't let a node select to have a run to itself
         #display ski resort
 
         option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
