@@ -1,25 +1,27 @@
 from Ui import Ui
 from route_planner import Plan_route
 import re
+import sqlite3
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
-
-"""ski_resorts = {
-    "Val Thorens" : {
-        "Plein Sud bottom": [["Plein Sud top",{"length":10}]],
-        "Plein Sud top": [["Pionniers bottom",{"length":5}],["Pionniers top",{"length":1}]],
-        "3 Vallees bottom": [["Plein Sud bottom",{"length":15}],["3 Vallees top",{"length":6}]],
-        "3 Vallees top": [["3 Vallees bottom",{"length":5}],["Plein Sud top",{"length":4}]],
-        "Pionniers bottom": [["Plein Sud bottom",{"length":10}],["Pionniers top",{"length":4}]],
-        "Pionniers top": [["3 Vallees bottom",{"length":1}]]
-        }
-}"""
+from display_graph import Display_graph
 
 class Terminal(Ui):
     def __init__(self):
-            self.saved_ski_resorts = Ski_resorts() #change this so that it load from database
-            self._construct_example_ski_resort()
+        self.saved_ski_resorts = Ski_resorts() #change this so that it load from database
+        self._construct_example_ski_resort()
+        DATABASE_NAME = "ski_resorts.db"
+        try:
+            with sqlite3.connect(self.DATABASE_NAME) as conn:
+                cursor = conn.cursor()
+                create_table = """CREATE TABLE IF NOT EXISTS ski_resorts (
+                                    ski_resort_name VARCHAR PRIMARY KEY
+                                );"""
+                cursor.execute(create_table)
+                conn.commit()
+        except sqlite3.OperationalError as e:
+            print("Failed to open database: ", e)
 
-    def menu(self):
+    def menu(self): #Allows one of seven options that the program allows to be selected
         option = "-1"
         print("""
         Menu:
@@ -40,7 +42,10 @@ class Terminal(Ui):
         elif option == "3":
             self.modify_ski_resort()
         elif option == "4":
-            self.display_ski_resort()
+            ski_resort_name = ""
+            while ski_resort_name not in self.saved_ski_resorts.resorts.keys():
+                ski_resort_name = input("Enter the name of the ski resort that you want to display: ")
+            Display_graph().display_ski_resort(self.saved_ski_resorts.resorts[ski_resort_name])
         elif option == "5":
             self.delete_ski_resort()
         elif option == "6":
@@ -48,7 +53,7 @@ class Terminal(Ui):
         elif option == "7":
             quit()
 
-    def _add_times(self, t1, t2):
+    def _add_times(self, t1, t2): #Adds two times together where t1 is in the format hh:mm and t2 is just an integer number of minutes
         h1, m1 = t1.split(":")
         m2 = t2
         mins = int(m1) + int(m2)
@@ -62,7 +67,7 @@ class Terminal(Ui):
             mins = f"0{mins}"
         return f"{hours}:{mins}"
     
-    def _construct_example_ski_resort(self):
+    def _construct_example_ski_resort(self): #Creates an example ski resort with ski lift stations and runs
         self.saved_ski_resorts.add_resort("Val Thorens")
         self.saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Plein Sud bottom")
         self.saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00")
@@ -81,7 +86,7 @@ class Terminal(Ui):
         self.saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Pionniers top")
         self.saved_ski_resorts.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
-    def generate_route(self):
+    def generate_route(self): #Creates a route through a ski resort dependent on various user parameters
         length = "0.00"
         valid = None
         while valid == None:
@@ -123,14 +128,14 @@ class Terminal(Ui):
         elif option == "q":
             quit()
 
-    def create_ski_resort(self):
+    def create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created
         ski_resort_name = ""
         while ski_resort_name in self.saved_ski_resorts.resorts or not(re.match('(^[a-z]|[A-Z]).*$',ski_resort_name)):
             ski_resort_name = input("Enter the name of the ski resort which you want to create: ")
         self.saved_ski_resorts.add_resort(ski_resort_name)
 
         creating = True
-        while creating:
+        while creating: #Allow any number of ski lift stations to be created
             create_node = input("Do you want to create a new ski lift station? (y/n): ") #Validation
             if create_node == "y":
                 node_name = ""
@@ -141,7 +146,7 @@ class Terminal(Ui):
                         node_name = input(f"Enter the name of the ski lift station: (Previously created ski lift stations: {', '.join(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})\n")
                 self.saved_ski_resorts.resorts[ski_resort_name].add_ski_node(node_name)
                 creating_run = "y"
-                while creating_run == "y":
+                while creating_run == "y": #Allow at least one run to be created from each ski lift station
                     run_name = ""
                     while run_name in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
                         run_names_excluding_node = list(self.saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
@@ -182,14 +187,14 @@ class Terminal(Ui):
                             closing = input("Enter the closing time of the run (hh:mm): ") #Validation
                             self.saved_ski_resorts.resorts[ski_resort_name].nodes[node].add_run(run_name,length,opening,closing)
                             creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added tjo each ski lift station
-                        break_loop = True
+                        break_loop = True #The loop will break if a new ski lift station is created since the dictionary being iterated over has changed
                     if break_loop:
                         break
                 if break_loop:
                     break
             
             incomplete_nodes = False
-            for node in self.saved_ski_resorts.resorts[ski_resort_name].nodes:
+            for node in self.saved_ski_resorts.resorts[ski_resort_name].nodes: #Checks if there are any more ski lift stations that have not been created left
                 for run in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs:
                     if run.name not in self.saved_ski_resorts.resorts[ski_resort_name].nodes:
                         incomplete_nodes = True
@@ -203,13 +208,33 @@ class Terminal(Ui):
             quit()
 
     def modify_ski_resort(self):
-        pass
+        try:
+            with sqlite3.connect(self.DATABASE_NAME) as conn:
+                cursor = conn.cursor()
+                #add options with code
 
-    def display_ski_resort(self):
-        pass
+                conn.commit()
+        except sqlite3.OperationalError as e:
+            print("Failed to open database: ", e)
 
     def delete_ski_resort(self):
-        pass
+        try:
+            with sqlite3.connect(self.DATABASE_NAME) as conn:
+                cursor = conn.cursor()
+
+                ski_resorts_list = ()
+                while ski_resort_to_delete not in ski_resorts_list:
+                    ski_resort_to_delete = input("Enter the name of the ski resort you want to delete: ") #need to check if the ski resort exists in the database before it can be deleted
+                    select_resorts = "SELECT ski_resort_name FROM ski_resorts;"
+                    cursor.execute(select_resorts)
+                    ski_resorts_list = cursor.fetchall()
+
+                delete_table = "DROP TABLE ?;"
+                cursor.execute(delete_table, ski_resort_to_delete)
+
+                conn.commit()
+        except sqlite3.OperationalError as e:
+            print("Failed to open database: ", e)
 
     def view_previous_routes(self):
         pass
@@ -218,5 +243,4 @@ class Terminal(Ui):
 if __name__ == "__main__":
     ui = Terminal()
     #ui.generate_route()
-    ui.create_ski_resort()
-
+    ui.menu()
