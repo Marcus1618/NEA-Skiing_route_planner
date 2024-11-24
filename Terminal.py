@@ -4,12 +4,14 @@ import re
 import sqlite3
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 from display_graph import Display_graph
+from database_changes import sync_from_database, sync_to_database
+from file_changes import view_previous_routes, save_route
 
 class Terminal(Ui):
+    DATABASE_NAME = "ski_resorts.db"
     def __init__(self):
         self.saved_ski_resorts = Ski_resorts() #change this so that it load from database
         self._construct_example_ski_resort()
-        DATABASE_NAME = "ski_resorts.db"
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
@@ -42,6 +44,9 @@ class Terminal(Ui):
         elif option == "3":
             self.modify_ski_resort()
         elif option == "4":
+            self.saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
+            self.saved_ski_resorts = sync_from_database(self.saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
+            self._construct_example_ski_resort()
             ski_resort_name = ""
             while ski_resort_name not in self.saved_ski_resorts.resorts.keys():
                 ski_resort_name = input("Enter the name of the ski resort that you want to display: ")
@@ -49,7 +54,7 @@ class Terminal(Ui):
         elif option == "5":
             self.delete_ski_resort()
         elif option == "6":
-            self.view_previous_routes()
+            view_previous_routes()
         elif option == "7":
             quit()
 
@@ -67,7 +72,7 @@ class Terminal(Ui):
             mins = f"0{mins}"
         return f"{hours}:{mins}"
     
-    def _construct_example_ski_resort(self): #Creates an example ski resort with ski lift stations and runs
+    def _construct_example_ski_resort(self): #Creates an example ski resort with ski lift stations and runs - only stored locally in the program
         self.saved_ski_resorts.add_resort("Val Thorens")
         self.saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Plein Sud bottom")
         self.saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00")
@@ -87,6 +92,9 @@ class Terminal(Ui):
         self.saved_ski_resorts.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
 
     def generate_route(self): #Creates a route through a ski resort dependent on various user parameters
+        self.saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
+        self.saved_ski_resorts = sync_from_database(self.saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
+        self._construct_example_ski_resort()
         length = "0.00"
         valid = None
         while valid == None:
@@ -122,6 +130,8 @@ class Terminal(Ui):
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
 
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
+        if save == "y":
+            save_route()
         option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
         if option == "m":
             self.menu()
@@ -129,6 +139,9 @@ class Terminal(Ui):
             quit()
 
     def create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created
+        self.saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
+        self.saved_ski_resorts = sync_from_database(self.saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
+        self._construct_example_ski_resort()
         ski_resort_name = ""
         while ski_resort_name in self.saved_ski_resorts.resorts or not(re.match('(^[a-z]|[A-Z]).*$',ski_resort_name)):
             ski_resort_name = input("Enter the name of the ski resort which you want to create: ")
@@ -198,6 +211,8 @@ class Terminal(Ui):
                 for run in self.saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs:
                     if run.name not in self.saved_ski_resorts.resorts[ski_resort_name].nodes:
                         incomplete_nodes = True
+        
+        sync_to_database(self.saved_ski_resorts, ski_resort_name) #Sync the ski resorts stored in the program with the ski resorts stored in the database
 
         #display ski resort
 
@@ -207,7 +222,7 @@ class Terminal(Ui):
         elif option == "q":
             quit()
 
-    def modify_ski_resort(self):
+    def modify_ski_resort(self): #add functionality
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
@@ -230,14 +245,11 @@ class Terminal(Ui):
                     ski_resorts_list = cursor.fetchall()
 
                 delete_table = "DROP TABLE ?;"
-                cursor.execute(delete_table, ski_resort_to_delete)
+                cursor.execute(delete_table, [ski_resort_to_delete])
 
                 conn.commit()
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
-
-    def view_previous_routes(self):
-        pass
 
 #TESTING
 if __name__ == "__main__":

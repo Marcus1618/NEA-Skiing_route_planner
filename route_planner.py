@@ -84,6 +84,12 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         return distances, previous_node
     
+    def generate_values(self): #Generates the value of a run
+        pass #IMPLEMENT
+
+    def get_weather(self): #Gets the weather for the ski resort
+        pass #IMPLEMENT
+
     def _two_move_route(self,original_chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time): #Finds the highest value sequence of two moves and completes them
         change = False
         priorities_for_double = []
