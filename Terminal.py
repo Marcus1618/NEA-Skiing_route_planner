@@ -4,21 +4,32 @@ import re
 import sqlite3
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 from display_graph import Display_graph
-from database_changes import sync_from_database, sync_to_database
+from database_changes import sync_from_database, add_resort_to_database
 from file_changes import view_previous_routes, save_route
 
 class Terminal(Ui):
     DATABASE_NAME = "ski_resorts.db"
     def __init__(self):
-        self.saved_ski_resorts = Ski_resorts() #change this so that it load from database
+        self.saved_ski_resorts = Ski_resorts()
         self._construct_example_ski_resort()
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
-                create_table = """CREATE TABLE IF NOT EXISTS ski_resorts (
-                                    ski_resort_name VARCHAR PRIMARY KEY
+                create_nodes_table = """CREATE TABLE IF NOT EXISTS nodes (
+                                    node_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    node_name TEXT NOT NULL,
+                                    resort_name TEXT NOT NULL
                                 );"""
-                cursor.execute(create_table)
+                cursor.execute(create_nodes_table)
+                create_runs_table = """CREATE TABLE IF NOT EXISTS runs (
+                                    run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    node_id INTEGER NOT NULL,
+                                    end_node_id INTEGER NOT NULL,
+                                    run_length INTEGER NOT NULL,
+                                    opening TEXT NOT NULL,
+                                    closing TEXT NOT NULL
+                                );"""
+                cursor.execute(create_runs_table)
                 conn.commit()
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
@@ -28,7 +39,7 @@ class Terminal(Ui):
         print("""
         Menu:
         1. Generate your route
-        2. Add a ski resort
+        2. Create a ski resort
         3. Modify an existing ski resort
         4. Display a ski resort
         5. Delete a ski resort
@@ -39,22 +50,52 @@ class Terminal(Ui):
 
         if option == "1":
             self.generate_route()
+            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            if option == "m":
+                self.menu()
+            elif option == "q":
+                quit()
         elif option == "2":
             self.create_ski_resort()
+            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            if option == "m":
+                self.menu()
+            elif option == "q":
+                quit()
         elif option == "3":
             self.modify_ski_resort()
+            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            if option == "m":
+                self.menu()
+            elif option == "q":
+                quit()
         elif option == "4":
             self.saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
             self.saved_ski_resorts = sync_from_database(self.saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
             self._construct_example_ski_resort()
             ski_resort_name = ""
             while ski_resort_name not in self.saved_ski_resorts.resorts.keys():
-                ski_resort_name = input("Enter the name of the ski resort that you want to display: ")
+                ski_resort_name = input(f"Enter the name of the ski resort that you want to display: ({', '.join(self.saved_ski_resorts.resorts.keys())})\n")
             Display_graph().display_ski_resort(self.saved_ski_resorts.resorts[ski_resort_name])
+            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            if option == "m":
+                self.menu()
+            elif option == "q":
+                quit()
         elif option == "5":
             self.delete_ski_resort()
+            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            if option == "m":
+                self.menu()
+            elif option == "q":
+                quit()
         elif option == "6":
             view_previous_routes()
+            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            if option == "m":
+                self.menu()
+            elif option == "q":
+                quit()
         elif option == "7":
             quit()
 
@@ -132,11 +173,6 @@ class Terminal(Ui):
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
         if save == "y":
             save_route()
-        option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
-        if option == "m":
-            self.menu()
-        elif option == "q":
-            quit()
 
     def create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created
         self.saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
@@ -212,15 +248,9 @@ class Terminal(Ui):
                     if run.name not in self.saved_ski_resorts.resorts[ski_resort_name].nodes:
                         incomplete_nodes = True
         
-        sync_to_database(self.saved_ski_resorts, ski_resort_name) #Sync the ski resorts stored in the program with the ski resorts stored in the database
+        add_resort_to_database(self.saved_ski_resorts, ski_resort_name) #Add the ski resorts created in the program to the database
 
         #display ski resort
-
-        option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
-        if option == "m":
-            self.menu()
-        elif option == "q":
-            quit()
 
     def modify_ski_resort(self): #add functionality
         try:
@@ -237,15 +267,27 @@ class Terminal(Ui):
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
 
-                ski_resorts_list = ()
+                select_resorts = "SELECT resort_name FROM nodes;"
+                cursor.execute(select_resorts)
+                ski_resorts_list_unpacked = cursor.fetchall()
+                ski_resorts_list =[]
+                for item in ski_resorts_list_unpacked:
+                    ski_resorts_list.append(item[0])
+                ski_resorts_list = set(ski_resorts_list)
+                ski_resort_to_delete = ""
                 while ski_resort_to_delete not in ski_resorts_list:
-                    ski_resort_to_delete = input("Enter the name of the ski resort you want to delete: ") #need to check if the ski resort exists in the database before it can be deleted
-                    select_resorts = "SELECT ski_resort_name FROM ski_resorts;"
-                    cursor.execute(select_resorts)
-                    ski_resorts_list = cursor.fetchall()
+                    ski_resort_to_delete = input(f"Enter the name of the ski resort you want to delete: ({", ".join(ski_resorts_list)})\n") #need to check if the ski resort exists in the database before it can be deleted
 
-                delete_table = "DROP TABLE ?;"
-                cursor.execute(delete_table, [ski_resort_to_delete])
+                get_node_ids = "SELECT node_id FROM nodes WHERE resort_name=?;"
+                cursor.execute(get_node_ids, [ski_resort_to_delete])
+                node_ids = cursor.fetchall()
+
+                delete_records = "DELETE FROM nodes WHERE resort_name=?;"
+                cursor.execute(delete_records, [ski_resort_to_delete])
+
+                for node_id in node_ids:
+                    delete_runs = "DELETE FROM runs WHERE node_id=?;"
+                    cursor.execute(delete_runs, [node_id[0]])
 
                 conn.commit()
         except sqlite3.OperationalError as e:

@@ -12,7 +12,6 @@ class Ski_resorts():
     def resorts(self):
         return self.__resorts
 
-
 class Ski_resort():
     def __init__(self,name):
         self.__name = name
@@ -98,8 +97,7 @@ class Ski_resort():
                     run.length = inf
                 else:
                     run.length = run.open_length
-
-    
+  
 class Node(): #Make abstract methods
     def __init__(self,name):
         self._name = name
@@ -154,8 +152,6 @@ class Run():
     @property
     def closing(self):
         return self._closing
-
-
 
 #Do these later
 class Ski_park(Node):

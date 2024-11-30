@@ -1,10 +1,10 @@
 import networkx as nx 
 import matplotlib.pyplot as plt
  
-class Display_graph:
+class Display_graph():
    
-    def __init__(self): 
-        self._edges = [] 
+    def __init__(self):
+        self._edges = []
 
     def add_edge(self, x, y): #adds edge between nodes a and b
         edge = [x, y]
