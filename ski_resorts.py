@@ -16,10 +16,10 @@ class Ski_resort():
     def __init__(self,name):
         self.__name = name
         self.__nodes = {}
-        self._time = "00:00"
+        self.__time = "00:00"
     
-    def add_ski_node(self,name):
-        self.__nodes[name] = Ski_node(name)
+    def add_ski_node(self,name,altitude):
+        self.__nodes[name] = Ski_node(name,altitude)
     
     @property
     def nodes(self):
@@ -27,18 +27,18 @@ class Ski_resort():
     
     @property
     def time(self):
-        return self._time
+        return self.__time
     
     @time.setter
     def time(self,time):
-        self._time = time
+        self.__time = time
     
     def node_number(self):
         return len(self.__nodes)
 
     def increment_time(self,mins):
         if mins > 0 and mins != inf:
-            h1, m1 = self._time.split(":")
+            h1, m1 = self.__time.split(":")
             mins = int(m1) + mins
             hours = int(h1) + mins // 60
             mins = mins % 60
@@ -48,13 +48,13 @@ class Ski_resort():
                 hours = f"0{hours}"
             if len(str(mins)) == 1:
                 mins = f"0{mins}"
-            self._time = f"{hours}:{mins}"
+            self.__time = f"{hours}:{mins}"
             self.check_open()
 
     
     def decrement_time(self,mins):
         if mins > 0 and mins != inf:
-            h1, m1 = self._time.split(":")
+            h1, m1 = self.__time.split(":")
             hours = int(h1) - math.ceil((mins-int(m1)) / 60)
             mins = int(m1) - mins % 60
             if mins < 0:
@@ -65,7 +65,7 @@ class Ski_resort():
                 hours = f"0{hours}"
             if len(str(mins)) == 1:
                 mins = f"0{mins}"
-            self._time = f"{hours}:{mins}"
+            self.__time = f"{hours}:{mins}"
             self.check_open()
     
     def compare_greater(self,t1,t2):
@@ -93,41 +93,50 @@ class Ski_resort():
     def check_open(self):
         for lift in self.__nodes.values():
             for run in lift.runs:
-                if self.compare_greater(run.opening, self._time) or self.compare_greater_or_equal(self._time, run.closing):
+                if self.compare_greater(run.opening, self.__time) or self.compare_greater_or_equal(self.__time, run.closing):
                     run.length = inf
                 else:
                     run.length = run.open_length
   
 class Node(): #Make abstract methods
-    def __init__(self,name):
+    def __init__(self,name, altitude):
         self._name = name
-        self._runs = []
+        self._altitude = altitude
+        self.__runs = []
 
-    def add_run(self,name,length,opening,closing):
-        self._runs.append(Run(name,length,opening,closing))
+    def add_run(self,name,length,opening,closing,lift,difficulty,lift_type):
+        self.__runs.append(Run(name,length,opening,closing,lift,difficulty,lift_type))
     
     @property
     def runs(self):
-        return self._runs
+        return self.__runs
     
     @property
     def name(self):
         return self._name
 
-    def remove(self):
-        pass
+    @property
+    def altitude(self):
+        return self._altitude
+    
+    @altitude.setter
+    def altitude(self,altitude):
+        self._altitude = altitude
 
 class Ski_node(Node):
-    def __init__(self,name):
-        super().__init__(name)
+    def __init__(self,name,altitude):
+        super().__init__(name,altitude)
     
 class Run():
-    def __init__(self,name,length,opening,closing):
+    def __init__(self,name,length,opening,closing,lift,difficulty,lift_type):
         self._name = name
         self._length = length
         self._open_length = length
         self._opening = opening
         self._closing = closing
+        self._lift = lift
+        self._difficulty = difficulty
+        self._lift_type = lift_type
     
     @property
     def name(self):
@@ -152,12 +161,24 @@ class Run():
     @property
     def closing(self):
         return self._closing
+    
+    @property
+    def lift(self):
+        return self._lift
+    
+    @property
+    def difficulty(self):
+        return self._difficulty
+    
+    @property
+    def lift_type(self):
+        return self._lift_type
 
 #Do these later
 class Ski_park(Node):
-    def __init__(self,name):
-        super().__init__(name)
+    def __init__(self,name,altitude):
+        super().__init__(name,altitude)
 
 class Amenity(Node):
-    def __init__(self,name):
-        super().__init__(name)
+    def __init__(self,name,altitude):
+        super().__init__(name,altitude)
