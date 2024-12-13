@@ -6,7 +6,7 @@ class Display_graph():
     def __init__(self):
         self.__edges = []
 
-    def __add_edge(self, x, y): #adds edge between nodes a and b
+    def __add_edge(self, x, y): #adds edge between nodes x and y
         edge = [x, y]
         self.__edges.append(edge) 
 
@@ -16,7 +16,7 @@ class Display_graph():
         nx.draw_networkx(G)
         plt.show()
 
-    def display_ski_resort(self,ski_resort_object): #Displays a chosen ski resort in a graph format
+    def display_ski_resort(self,ski_resort_object): #Formats the ski resort object into a set of edges that can be displayed
         for node in ski_resort_object.nodes.values():
             for run in node.runs:
                 self.__add_edge(node.name, run.name) #add colour of run to edge!!!

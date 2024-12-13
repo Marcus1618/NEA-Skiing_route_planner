@@ -1,8 +1,14 @@
 from math import inf
 import math
 
+######################################################################################################################################################
+# GROUP A Skill: Complex user-defined use of a object-orientated programming model e.g. classes, inheritance, composition, polymorphism and interfaces
+######################################################################################################################################################
 class Ski_resorts():
     def __init__(self):
+        #############################
+        # GROUP B Skill: Dictionaries
+        #############################
         self.__resorts = {}
     
     def add_resort(self,name):
@@ -36,6 +42,9 @@ class Ski_resort():
     def node_number(self):
         return len(self.__nodes)
 
+    ###############################################
+    # GROUP B Skill: Simple user defined algorithms
+    ###############################################
     def increment_time(self,mins):
         if mins > 0 and mins != inf:
             h1, m1 = self.__time.split(":")
@@ -51,7 +60,9 @@ class Ski_resort():
             self.__time = f"{hours}:{mins}"
             self.check_open()
 
-    
+    ###############################################
+    # GROUP B Skill: Simple user defined algorithms
+    ###############################################
     def decrement_time(self,mins):
         if mins > 0 and mins != inf:
             h1, m1 = self.__time.split(":")

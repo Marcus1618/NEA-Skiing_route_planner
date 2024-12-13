@@ -3,6 +3,9 @@ from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 
 DATABASE_NAME = "ski_resorts.db"
 
+##############################################
+# GROUP A Skill: Cross-table parameterised SQL
+##############################################
 def add_resort_to_database(ski_resort_object, new_resort_name):
     try:
         with sqlite3.connect(DATABASE_NAME) as conn:

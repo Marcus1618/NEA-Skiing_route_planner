@@ -49,6 +49,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             mins = f"0{mins}"
         return f"{hours}:{mins}"
 
+    #######################################################
+    # GROUP A Skill: Graph traversal (Dijkstra’s algorithm)
+    #######################################################
     def __dijkstras_traversal(self,start,time_independent): #Dijkstra's algorithm to find the shortest path from a node in the graph to all of the other nodes
         node_number = self.__ski_resort_object.node_number()
         queue = Priority_queue(node_number)
@@ -89,7 +92,10 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
     def __get_weather(self): #Gets the weather for the ski resort
         pass #IMPLEMENT
-
+    
+    ################################################
+    # GROUP A Skill: Complex user-defined algorithms
+    ################################################
     def __two_move_route(self,original_chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time): #Finds the highest value sequence of two moves and completes them
         change = False
         priorities_for_double = []
@@ -201,7 +207,10 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
         return time_elapsed, route
     
-    def __best_way_back(self,route,time_elapsed,chosen_node,as_close_to_time,adjacent_nodes): #Runs when there are no viable sequences of three moves. Determines a route which tries to return to the starting node
+    ################################################
+    # GROUP A Skill: Complex user-defined algorithms
+    ################################################
+    def __best_way_back(self,route,time_elapsed,chosen_node,as_close_to_time,adjacent_nodes): #Used when there are no viable sequences of three moves. Determines a route which tries to return to the starting node
         #If as_close_to_time is False, the route will return to the starting node ensuring it reaches it before the specified length of route is reached
         #If as_close_to_time is True, the route will return to the starting node but will try to end the route at a time close to the specified length of route meaning it could be longer than the specified length
         route, change_two, time_elapsed, chosen_node = self.__two_move_route(chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time)
@@ -233,6 +242,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             route = self.__fastest_route_back(chosen_node,time_elapsed,route)
         return route
 
+    ################################################
+    # GROUP A Skill: Complex user-defined algorithms
+    ################################################
     def __should_route_continue(self,adjacent_nodes): #Determines if there is a 3 move route that will be able to be taken in the future
         continue_route = False
         for run in adjacent_nodes: #Iterating through the adjacent nodes to see if there are three nodes in a sequence that are all either open or will be open in the future
@@ -259,6 +271,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                     break
         return continue_route
 
+    ###############################################
+    # GROUP B Skill: Simple user defined algorithms
+    ###############################################
     def __complete_move(self,priorities,adjacent_nodes,time_elapsed,route): #Completes the first move of the sequence of three moves which had the highest value
         if priorities.count(max(priorities)) == 1:
             chosen_node = adjacent_nodes[priorities.index(max(priorities))]
@@ -279,6 +294,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         self.__ski_resort_object.increment_time(chosen_node.length)
         return chosen_node, time_elapsed, route
 
+    ###############################################
+    # GROUP B Skill: Simple user defined algorithms
+    ###############################################
     def __fastest_route_back(self, chosen_node,time_elapsed,route): #Determines the fastest route back to the starting node from the current node
         temp_route = route.copy()
         times,previous_node = self.__dijkstras_traversal(chosen_node.name, False)
@@ -300,6 +318,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 break
         return temp_route
 
+    #####################################
+    # GROUP A Skill: Recursive algorithms
+    #####################################
     def __find_values(self,adjacent_nodes,count,temp_time_elapsed, priorities, value, values, ignore_way_home): #A recursive function to find the values of the possible routes from the current node
         if count >= 2: #base case determining the search depth through the graph
             for node_1 in adjacent_nodes:
@@ -339,6 +360,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         count -= 1
         return priorities, values, count
     
+    ################################################
+    # GROUP A Skill: Complex user-defined algorithms
+    ################################################
     def get_route(self, as_close_to_time): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node
         time_elapsed = 0
         complete = False
@@ -410,7 +434,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             returned_to_start = False
         return route, returned_to_start
 
-
+###############################
+# GROUP A Skill: Priority queue
+###############################
 class Priority_queue(): #Implementation of a circular, priority queue using a static array
     def __init__(self,n):
         self.__max_length = int((0.5*n**2)-(1.5*n)+2) #The maximum length of the queue that the Dijkstra's algorithm could require if the graph is fully connected 
@@ -419,6 +445,9 @@ class Priority_queue(): #Implementation of a circular, priority queue using a st
         self.__rear = -1
         self.__size = 0
 
+    #################################
+    # GROUP A Skill: Queue operations
+    #################################
     def enQueue(self,item): #Adds an item to the rear of the queue where an item is a tuple of (distance,node name)
         if self.isFull():
             print("Queue is full")

@@ -5,13 +5,16 @@ import sqlite3
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 from display_graph import Display_graph
 from database_changes import sync_from_database, add_resort_to_database
-from file_changes import view_previous_routes, save_route
+from file_changes import view_previous_route, save_route, get_route_names
 
 class Terminal(Ui):
     DATABASE_NAME = "ski_resorts.db"
     def __init__(self):
         self.__saved_ski_resorts = Ski_resorts()
         self.__construct_example_ski_resort()
+        ###############################################
+        # GROUP A Skill: Complex data model in database
+        ###############################################
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
@@ -94,7 +97,15 @@ class Terminal(Ui):
             elif option == "q":
                 quit()
         elif option == "6":
-            view_previous_routes()
+            previous_route_names = get_route_names()
+            if len(previous_route_names) != 0:
+                route_name = input(f"Enter the name of the route that you want to view: ({", ".join(previous_route_names)})\n") #validate
+                route_to_display, resort_name = view_previous_route(route_name)
+                print(f"\nRoute {route_name} in {resort_name}:")
+                for line in route_to_display:
+                    print(line)
+            else:
+                print("There are no routes saved.")
             option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
             if option == "m":
                 self.menu()
@@ -118,6 +129,9 @@ class Terminal(Ui):
         return f"{hours}:{mins}"
     
     def __construct_example_ski_resort(self): #Creates an example ski resort with ski lift stations and runs - only stored locally in the program
+        ######################
+        # GROUP A Skill: Graph
+        ######################
         self.__saved_ski_resorts.add_resort("Val Thorens")
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Plein Sud bottom", 2300)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00", 1, "None", "chairlift")
@@ -176,8 +190,12 @@ class Terminal(Ui):
 
         save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
         if save == "y":
-            save_route()
+            route_name = input("Enter the name of the route: ") #Validate - must be unique
+            save_route(route_name, route, start_time, returned_to_start, ski_resort)
 
+    ################################################################################################
+    # GROUP A Skill: Dynamic generation of objects based on complex user-defined use of an OOP model
+    ################################################################################################
     def __create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
@@ -272,6 +290,9 @@ class Terminal(Ui):
 
         #display ski resort
 
+    ##############################################
+    # GROUP A Skill: Cross-table parameterised SQL
+    ##############################################
     def __modify_ski_resort(self): #add functionality
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
@@ -282,6 +303,9 @@ class Terminal(Ui):
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
 
+    ##############################################
+    # GROUP A Skill: Cross-table parameterised SQL
+    ##############################################
     def __delete_ski_resort(self):
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
