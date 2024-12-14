@@ -154,10 +154,18 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         if (maximum >= 0 and chosen_node_2.name == self.__start) or (as_close_to_time == True and abs(maximum) <= self.__length-(time_elapsed+dist_home_from_chosen)): #if the two moves are viable, add them to the route
             change = True
             time_elapsed += chosen_node_1.length
-            route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed,"pause":False})
+            if chosen_node_1.lift:
+                lift_or_run = "lift"
+            else:
+                lift_or_run = "run"
+            route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
             self.__ski_resort_object.increment_time(chosen_node_1.length)
             time_elapsed += chosen_node_2.length
-            route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed,"pause":False})
+            if chosen_node_2.lift:
+                lift_or_run = "lift"
+            else:
+                lift_or_run = "run"
+            route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
             self.__ski_resort_object.increment_time(chosen_node_2.length)
             original_chosen_node = chosen_node_2
 
@@ -192,7 +200,11 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         if max(priorities) >= 0 or (as_close_to_time == True and abs(max(priorities)) <= self.__length-(time_elapsed+dist_home_from_chosen)): #if the one move is viable add it to the route
             change = True
             time_elapsed += chosen_node.length
-            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False})
+            if chosen_node.lift:
+                lift_or_run = "lift"
+            else:
+                lift_or_run = "run"
+            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
             self.__ski_resort_object.increment_time(chosen_node.length)
             original_chosen_node = chosen_node
 
@@ -202,7 +214,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         time_elapsed += 1
         self.__ski_resort_object.increment_time(1)
         if route[-1]["pause"] == False:
-            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":True})
+            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":True, "lift":None})
         else: #If the route was already paused, increment the time of the pause
             route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
         return time_elapsed, route
@@ -290,7 +302,11 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             chosen_node = adjacent_nodes[index_choice]
 
         time_elapsed += chosen_node.length
-        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False})
+        if chosen_node.lift:
+            lift_or_run = "lift"
+        else:
+            lift_or_run = "run"
+        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
         self.__ski_resort_object.increment_time(chosen_node.length)
         return chosen_node, time_elapsed, route
 
@@ -366,7 +382,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     def get_route(self, as_close_to_time): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node
         time_elapsed = 0
         complete = False
-        route = [{"start":self.__start,"time_elapsed":0,"pause":False}]
+        route = [{"start":self.__start,"time_elapsed":0,"pause":False,"lift":None}]
         chosen_node = self.__ski_resort[self.__start]
         returned_to_start = True
         previous_route_length = self.__length

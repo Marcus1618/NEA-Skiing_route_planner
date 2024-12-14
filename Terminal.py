@@ -101,7 +101,7 @@ class Terminal(Ui):
             if len(previous_route_names) != 0:
                 route_name = input(f"Enter the name of the route that you want to view: ({", ".join(previous_route_names)})\n") #validate
                 route_to_display, resort_name = view_previous_route(route_name)
-                print(f"\nRoute {route_name} in {resort_name}:")
+                print(f"\nRoute '{route_name}' in {resort_name}:")
                 for line in route_to_display:
                     print(line)
             else:
@@ -182,8 +182,8 @@ class Terminal(Ui):
         for i in range(len(route)-1):
             if route[i+1]["pause"] == True:
                 print(f"{i+1}. Break for {route[i+1]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(start_time,route[i+1]["time_elapsed"])}")
-            else:
-                print(f"{i+1}. {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(start_time,route[i+1]['time_elapsed'])}")
+            else: #add lift/run from x to y
+                print(f"{i+1}. {route[i+1]["lift"].upper()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(start_time,route[i+1]['time_elapsed'])}")
 
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
@@ -293,11 +293,182 @@ class Terminal(Ui):
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
-    def __modify_ski_resort(self): #add functionality
+    def __modify_ski_resort(self): #Allows the user to modify an existing run, add a new run or lift or add a new node
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
-                #add options with code
+                select_resorts = "SELECT resort_name FROM nodes;"
+                cursor.execute(select_resorts)
+                ski_resorts_list_unpacked = cursor.fetchall()
+                ski_resorts_list =[]
+                for item in ski_resorts_list_unpacked:
+                    ski_resorts_list.append(item[0])
+                ski_resorts_list = set(ski_resorts_list)
+                ski_resort_to_modify = ""
+                while ski_resort_to_modify not in ski_resorts_list:
+                    ski_resort_to_modify = input(f"Enter the name of the ski resort you want to modify: ({", ".join(ski_resorts_list)})\n")
+
+                #Choice of modification
+                modify = ""
+                while modify not in ["1","2","3"]:
+                    modify = input("What do you want to modify?\n1. Add a new ski lift station\n2. Add a new run or lift\n3. Modify an existing run\n")
+                
+                if modify == "1":
+                    select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
+                    cursor.execute(select_nodes, [ski_resort_to_modify])
+                    node_names_unpacked = cursor.fetchall()
+                    node_names =[]
+                    for item in node_names_unpacked:
+                        node_names.append(item[0])
+                    node_name = ""
+                    while node_name in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
+                        if len(node_names) == 0:
+                            node_name = input(f"Enter the name of the ski lift station that you want to create: (No previously created stations)\n")
+                        else:
+                            node_name = input(f"Enter the name of the ski lift station that you want to create: (Previously created ski lift stations: {', '.join(node_names)})\n")
+                    altitude = input("Enter the altitude of the ski lift station: ") #Validation
+                    add_node = """INSERT INTO nodes (node_name, resort_name, altitude)
+                                    VALUES (?,?,?);"""
+                    cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude])
+                    creating_run = "y"
+                    while creating_run == "y": #Allow at least one run to be created from each ski lift station
+                        select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
+                        cursor.execute(select_runs, [node_name, ski_resort_to_modify])
+                        runs_unpacked = cursor.fetchall()
+                        run_names = []
+                        for i in range(len(runs_unpacked)):
+                            select_end_node_name = "SELECT node_name FROM nodes WHERE node_id=?;"
+                            cursor.execute(select_end_node_name, [runs_unpacked[i][2]])
+                            end_node_name = cursor.fetchone()[0]
+                            run_names.append(end_node_name)
+                        run_name = ""
+                        while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
+                            run_names_excluding_node = []
+                            run_names_excluding_node.remove(node_name)
+                            if len(run_names_excluding_node) == 0:
+                                run_name = input(f"Enter the end ski lift station of a run: (No previously created ski lift stations)\n")   
+                            else:
+                                run_name = input(f"Enter the end ski lift station of a run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
+                        length = input("Enter the length of the run (minutes): ") #Validation
+                        opening = input("Enter the opening time of the run (hh:mm): ") #Validation
+                        closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
+                        lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                        if lift == "l":
+                            lift = 1
+                        elif lift == "r":
+                            lift = 0
+                        difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
+                        lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
+                        add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
+                                    VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
+                        cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
+                        creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
+                
+                elif modify == "2": #add a new run or lift
+                    select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
+                    cursor.execute(select_nodes, [ski_resort_to_modify])
+                    node_names_unpacked = cursor.fetchall()
+                    node_names =[]
+                    for item in node_names_unpacked:
+                        node_names.append(item[0])
+                    node_name = ""
+                    while node_name not in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
+                        if len(node_names) == 0:
+                            node_name = input(f"Enter the name of the ski lift station from which you want to add a run or lift: (No previously created stations)\n")
+                        else:
+                            node_name = input(f"Enter the name of the ski lift station from which you want to add a run or lift: (Previously created ski lift stations: {', '.join(node_names)})\n")
+                    
+                    select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
+                    cursor.execute(select_runs, [node_name, ski_resort_to_modify])
+                    runs_unpacked = cursor.fetchall()
+                    run_names = []
+                    for i in range(len(runs_unpacked)):
+                        select_end_node_name = "SELECT node_name FROM nodes WHERE node_id=?;"
+                        cursor.execute(select_end_node_name, [runs_unpacked[i][2]])
+                        end_node_name = cursor.fetchone()[0]
+                        run_names.append(end_node_name)
+                    run_name = ""
+                    while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
+                        run_names_excluding_node = []
+                        run_names_excluding_node.remove(node_name)
+                        if len(run_names_excluding_node) == 0:
+                            run_name = input(f"Enter the end ski lift station of a run: (No previously created ski lift stations)\n")   
+                        else:
+                            run_name = input(f"Enter the end ski lift station of a run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
+                    length = input("Enter the length of the run (minutes): ") #Validation
+                    opening = input("Enter the opening time of the run (hh:mm): ") #Validation
+                    closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
+                    lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                    if lift == "l":
+                        lift = 1
+                    elif lift == "r":
+                        lift = 0
+                    difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
+                    lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
+                    add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
+                                VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
+                    cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
+
+                elif modify == "3": #modify an existing run
+                    select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
+                    cursor.execute(select_nodes, [ski_resort_to_modify])
+                    node_names_unpacked = cursor.fetchall()
+                    node_names =[]
+                    for item in node_names_unpacked:
+                        node_names.append(item[0])
+                    node_name = ""
+                    while node_name not in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
+                        if len(node_names) == 0:
+                            node_name = input(f"Enter the name of the ski lift station from which you want to edit a run or lift: (No previously created stations)\n")
+                        else:
+                            node_name = input(f"Enter the name of the ski lift station from which you want to edit a run or lift: (Previously created ski lift stations: {', '.join(node_names)})\n")
+                    
+                    select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
+                    cursor.execute(select_runs, [node_name, ski_resort_to_modify])
+                    runs_unpacked = cursor.fetchall()
+                    run_names = []
+                    for i in range(len(runs_unpacked)):
+                        select_end_node_name = "SELECT node_name FROM nodes WHERE node_id=?;"
+                        cursor.execute(select_end_node_name, [runs_unpacked[i][2]])
+                        end_node_name = cursor.fetchone()[0]
+                        run_names.append(end_node_name)
+                    run_name = ""
+                    while run_name not in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
+                        run_names_excluding_node = []
+                        run_names_excluding_node.remove(node_name)
+                        if len(run_names_excluding_node) == 0:
+                            run_name = input(f"Enter the end ski lift station of the run that you want to edit: (No previously created ski lift stations)\n")   
+                        else:
+                            run_name = input(f"Enter the end ski lift station of the run that you want to edit: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
+
+                    select_lift_or_run = ""
+                    modify3_option = ""
+                    while modify3_option not in ["1","2","3","4","5","6"]:
+                        #number of available options depends on if it is a lift or a run
+                        #whether the run is closed
+
+                        #if run
+                        modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n6. Difficulty\n") #don't allow 6 as an option!
+                        #if lift
+                        modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n7. Lift type\n")
+
+                    if modify3_option == "1": #CHECK THIS
+                        length = input("Enter the new length of the run (minutes): ") #Validation
+                        modify_run = """UPDATE runs
+                                        SET run_length=?
+                                        WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?) AND end_node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"""
+                    elif modify3_option == "2":
+                        pass #update time
+                    elif modify3_option == "3":
+                        pass #update time
+                    elif modify3_option == "4":
+                        pass #no input needed
+                    elif modify3_option == "5":
+                        pass #set length to inf
+                    elif modify3_option == "6":
+                        pass #update difficulty
+                    elif modify3_option == "7":
+                        pass #update lift type
 
                 conn.commit()
         except sqlite3.OperationalError as e:

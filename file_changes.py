@@ -47,7 +47,7 @@ def save_route(route_name, route, start_time, returned_to_start, ski_resort):
             if route[i+1]["pause"] == True:
                 f.write(f"{i+1}. Break for {route[i+1]["time_elapsed"]} minutes due to ski lifts not yet being open - {add_times(start_time,route[i+1]["time_elapsed"])}\n")
             else:
-                f.write(f"{i+1}. {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {add_times(start_time,route[i+1]['time_elapsed'])}\n")
+                f.write(f"{i+1}. {route[i+1]["lift"].upper()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {add_times(start_time,route[i+1]['time_elapsed'])}\n")
 
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.\n")
