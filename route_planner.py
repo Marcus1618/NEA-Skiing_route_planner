@@ -3,10 +3,19 @@ import random
 from ski_resorts import Ski_resorts, Ski_resort, Node, Ski_node, Run
 
 class Plan_route(): #Plan_route class is used to create a viable route through a ski resort
-    def __init__(self,ski_resort,start,length,start_time): #Initialisation
+    DIFFICULTY_MULTIPLIER = 10000
+    ALTITUDE_MULTIPLIER = 1000
+    REPETITION_MULTIPLIER = 100
+    LIFT_TYPE_MULTIPLIER = 1
+    def __init__(self,ski_resort,start,length,start_time, max_difficulty, snow_conditions, lift_type_preference, weather): #Initialisation
         self.__ski_resort_object = ski_resort
         self.__ski_resort = ski_resort.nodes
         self.__start = start
+        self.__max_difficulty = max_difficulty
+        self.__snow_conditions = snow_conditions
+        self.__weather = weather
+        self.__repeated_runs = {}
+        self.__lift_type_preference = lift_type_preference
         self.__length = self.__hours_to_minutes(length)
         self.__ski_resort_object.time = start_time
         self.__ski_resort_object.check_open()
@@ -87,8 +96,62 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         return distances, previous_node
     
-    def __generate_values(self): #Generates the value of a run
-        pass #IMPLEMENT
+    def __generate_values(self, start_node, end_node): #Generates the value of a run - receives a node object and a run object as parameters
+        value = 0
+        #difficulty score
+        if self.__max_difficulty == "black":
+            if end_node.difficulty == "black" or end_node.difficulty == "red" or end_node.difficulty == "blue" or end_node.difficulty == "green":
+                value += 9*Plan_route.DIFFICULTY_MULTIPLIER
+        elif self.__max_difficulty == "red":
+            if end_node.difficulty == "red" or end_node.difficulty == "blue" or end_node.difficulty == "green":
+                value += 9*Plan_route.DIFFICULTY_MULTIPLIER
+            elif end_node.difficulty == "black":
+                value += 1*Plan_route.DIFFICULTY_MULTIPLIER
+        elif self.__max_difficulty == "blue":
+            if end_node.difficulty == "blue" or end_node.difficulty == "green":
+                value += 9*Plan_route.DIFFICULTY_MULTIPLIER
+            elif end_node.difficulty == "red":
+                value += 2*Plan_route.DIFFICULTY_MULTIPLIER
+            elif end_node.difficulty == "black":
+                value += 1*Plan_route.DIFFICULTY_MULTIPLIER
+        elif self.__max_difficulty == "green":
+            if end_node.difficulty == "green":
+                value += 9*Plan_route.DIFFICULTY_MULTIPLIER
+            elif end_node.difficulty == "blue":
+                value += 3*Plan_route.DIFFICULTY_MULTIPLIER
+            elif end_node.difficulty == "red":
+                value += 2*Plan_route.DIFFICULTY_MULTIPLIER
+            elif self.__max_difficulty == "black":
+                value += 1*Plan_route.DIFFICULTY_MULTIPLIER
+        
+        #altitude score depending on snow conditions and weather - doesn't have to have a score
+
+        #repetition of runs
+        num_repetitions = 0
+        if (start_node.name,end_node.name) in self.__repeated_runs.keys():
+            num_repetitions = self.__repeated_runs[(start_node.name,end_node.name)]
+        if num_repetitions < 90:
+            value += 990-(num_repetitions*0.1*Plan_route.REPETITION_MULTIPLIER)
+        else:
+            value += 990-(89*0.1*Plan_route.REPETITION_MULTIPLIER)
+
+        #lift type preference
+        if self.__lift_type_preference == "gondola":
+            if end_node.lift_type == "gondola":
+                value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
+            else:
+                value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
+        elif self.__lift_type_preference == "chairlift":
+            if end_node.lift_type == "chairlift":
+                value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
+            else:
+                value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
+        elif self.__lift_type_preference == "draglift":
+            if end_node.lift_type == "draglift":
+                value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
+            else:
+                value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
+        return value
 
     def __get_weather(self): #Gets the weather for the ski resort
         pass #IMPLEMENT
@@ -100,7 +163,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         change = False
         priorities_for_double = []
         for node in adjacent_nodes: #Iterate throught the adjacent nodes to calculate the values for each possible two move sequence
-            value = 0
+            value = self.__generate_values(original_chosen_node, node)
             temp_time_elapsed = time_elapsed + node.length
             adjacent_nodes_1 = self.__ski_resort[node.name].runs
             self.__ski_resort_object.increment_time(node.length)
@@ -159,6 +222,10 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             else:
                 lift_or_run = "run"
             route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+            if (original_chosen_node.name,chosen_node_1.name) in self.__repeated_runs.keys():
+                self.__repeated_runs[(original_chosen_node.name,chosen_node_1.name)] += 1
+            else:
+                self.__repeated_runs[(original_chosen_node.name,chosen_node_1.name)] = 1
             self.__ski_resort_object.increment_time(chosen_node_1.length)
             time_elapsed += chosen_node_2.length
             if chosen_node_2.lift:
@@ -166,6 +233,10 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             else:
                 lift_or_run = "run"
             route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+            if (chosen_node_1.name,chosen_node_2.name) in self.__repeated_runs.keys():
+                self.__repeated_runs[(chosen_node_1.name,chosen_node_2.name)] += 1
+            else:
+                self.__repeated_runs[(chosen_node_1.name,chosen_node_2.name)] = 1
             self.__ski_resort_object.increment_time(chosen_node_2.length)
             original_chosen_node = chosen_node_2
 
@@ -205,6 +276,10 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             else:
                 lift_or_run = "run"
             route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+            if (original_chosen_node.name,chosen_node.name) in self.__repeated_runs.keys():
+                self.__repeated_runs[(original_chosen_node.name,chosen_node.name)] += 1
+            else:
+                self.__repeated_runs[(original_chosen_node.name,chosen_node.name)] = 1
             self.__ski_resort_object.increment_time(chosen_node.length)
             original_chosen_node = chosen_node
 
@@ -286,7 +361,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ###############################################
     # GROUP B Skill: Simple user defined algorithms
     ###############################################
-    def __complete_move(self,priorities,adjacent_nodes,time_elapsed,route): #Completes the first move of the sequence of three moves which had the highest value
+    def __complete_move(self,priorities,adjacent_nodes,time_elapsed,route,original_chosen_node): #Completes the first move of the sequence of three moves which had the highest value
         if priorities.count(max(priorities)) == 1:
             chosen_node = adjacent_nodes[priorities.index(max(priorities))]
         else: #randomly choose between the nodes with the same priority
@@ -307,6 +382,10 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         else:
             lift_or_run = "run"
         route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+        if (original_chosen_node.name,chosen_node.name) in self.__repeated_runs.keys():
+            self.__repeated_runs[(original_chosen_node.name,chosen_node.name)] += 1
+        else:
+            self.__repeated_runs[(original_chosen_node.name,chosen_node.name)] = 1
         self.__ski_resort_object.increment_time(chosen_node.length)
         return chosen_node, time_elapsed, route
 
@@ -444,7 +523,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 complete = True
             
             else: #If a sequence of three moves is viable within the time
-                chosen_node, time_elapsed, route = self.__complete_move(priorities,adjacent_nodes,time_elapsed,route)
+                chosen_node, time_elapsed, route = self.__complete_move(priorities,adjacent_nodes,time_elapsed,route,chosen_node)
 
         if route[-1]["start"] != self.__start: #Check if the route ends at the starting node
             returned_to_start = False
