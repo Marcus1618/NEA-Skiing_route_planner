@@ -1,5 +1,6 @@
 from math import inf
 import random
+import requests
 from ski_resorts import Ski_resorts, Ski_resort, Node, Ski_node, Run
 
 class Plan_route(): #Plan_route class is used to create a viable route through a ski resort
@@ -7,7 +8,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ALTITUDE_MULTIPLIER = 1000
     REPETITION_MULTIPLIER = 100
     LIFT_TYPE_MULTIPLIER = 1
-    def __init__(self,ski_resort,start,length,start_time, max_difficulty, snow_conditions, lift_type_preference, weather): #Initialisation
+    URL_WEATHER = "https://api.tomorrow.io/v4/weather/forecast?location=45.1753%2C%206.3448&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
+    def __init__(self,ski_resort,start,length,start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude): #Initialisation
         self.__ski_resort_object = ski_resort
         self.__ski_resort = ski_resort.nodes
         self.__start = start
@@ -19,6 +21,12 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         self.__length = self.__hours_to_minutes(length)
         self.__ski_resort_object.time = start_time
         self.__ski_resort_object.check_open()
+        if latitude != "N/A" and longitude != "N/A":
+            self.__url_weather = f"https://api.tomorrow.io/v4/weather/forecast?location={latitude}%2C%20{longitude}&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
+        else:
+            self.__url_weather = Plan_route.URL_WEATHER
+        self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
+        
 
     def __hours_to_minutes(self,time): #Converts time from hh:mm format to minutes
         h,m = time.split(":")
@@ -96,6 +104,16 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         return distances, previous_node
     
+    def __min_and_max_altitudes(self): #Finds the minimum and maximum altitudes of the ski resort
+        min_altitude = inf
+        max_altitude = -inf
+        for node in self.__ski_resort.values():
+            if node.altitude < min_altitude:
+                min_altitude = node.altitude
+            if node.altitude > max_altitude:
+                max_altitude = node.altitude
+        return min_altitude, max_altitude
+
     def __generate_values(self, start_node, end_node): #Generates the value of a run - receives a node object and a run object as parameters
         value = 0
         #difficulty score
@@ -124,7 +142,32 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             elif self.__max_difficulty == "black":
                 value += 1*Plan_route.DIFFICULTY_MULTIPLIER
         
-        #altitude score depending on snow conditions and weather - doesn't have to have a score
+        #altitude score depending on snow conditions and weather
+        min_altitude_fraction = 0.25
+        max_altitude_fraction = 1
+        min_altitude, max_altitude = self.__min_and_max_altitudes()
+        if self.__weather != "unknown":
+            if not(self.__previous_snow == "N/A" or self.__current_snow == "N/A" or self.__temperature == "N/A"):
+                if self.__current_snow > 0:
+                    max_altitude_fraction = max_altitude_fraction*0.75
+                if self.__temperature < 3:
+                    min_altitude_fraction = min_altitude_fraction*0.5
+                else:
+                    min_altitude_fraction = min_altitude_fraction*1.3
+                if self.__previous_snow > 0:
+                    min_altitude_fraction = min_altitude_fraction*0.5
+        if self.__snow_conditions != "unknown":
+            if self.__snow_conditions == "good":
+               min_altitude_fraction = min_altitude_fraction*0.5                
+            elif self.__snow_conditions == "bad":
+                min_altitude_fraction = min_altitude_fraction*1.3
+        min_alititude_boundary = min_altitude + (max_altitude-min_altitude)*min_altitude_fraction
+        max_alititude_boundary = min_altitude + (max_altitude-min_altitude)*max_altitude_fraction
+        self.__ski_resort[end_node.name].altitude
+        if self.__ski_resort[end_node.name].altitude < min_alititude_boundary or self.__ski_resort[end_node.name].altitude > max_alititude_boundary:
+            value += 1*Plan_route.ALTITUDE_MULTIPLIER
+        else:
+            value += 9*Plan_route.ALTITUDE_MULTIPLIER
 
         #repetition of runs
         num_repetitions = 0
@@ -136,25 +179,46 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             value += 990-(89*0.1*Plan_route.REPETITION_MULTIPLIER)
 
         #lift type preference
-        if self.__lift_type_preference == "gondola":
-            if end_node.lift_type == "gondola":
-                value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
-            else:
-                value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
-        elif self.__lift_type_preference == "chairlift":
-            if end_node.lift_type == "chairlift":
-                value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
-            else:
-                value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
-        elif self.__lift_type_preference == "draglift":
-            if end_node.lift_type == "draglift":
-                value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
-            else:
-                value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
+        if end_node.lift == 1:
+            if self.__lift_type_preference == "gondola":
+                if end_node.lift_type == "gondola":
+                    value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
+                else:
+                    value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
+            elif self.__lift_type_preference == "chairlift":
+                if end_node.lift_type == "chairlift":
+                    value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
+                else:
+                    value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
+            elif self.__lift_type_preference == "draglift":
+                if end_node.lift_type == "draglift":
+                    value += 9*Plan_route.LIFT_TYPE_MULTIPLIER
+                else:
+                    value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
         return value
 
-    def __get_weather(self): #Gets the weather for the ski resort
-        pass #IMPLEMENT
+    def __get_weather(self, date): #Gets the weather for the ski resort
+        day_index = 0
+        if date == "today":
+            day_index = 1
+        elif date == "tomorrow":
+            day_index = 2
+        elif date == "2 days time":
+            day_index = 3
+        elif date == "3 days time":
+            day_index = 4
+        headers = {"accept": "application/json"}
+        response = requests.get(self.__url_weather, headers=headers)
+        if response.status_code == 200:
+            weather_data = response.json()
+            previous_snow = weather_data["timelines"]["daily"][day_index-1]["values"]["snowIntensityMax"]
+            current_snow = weather_data["timelines"]["daily"][day_index]["values"]["snowIntensityMax"]
+            temperature = weather_data["timelines"]["daily"][day_index]["values"]["temperatureAvg"]
+        else:
+            previous_snow = "N/A"
+            current_snow = "N/A"
+            temperature = "N/A"
+        return previous_snow, current_snow, temperature
     
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
@@ -170,7 +234,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
             single_priorities = []
             for node_1 in adjacent_nodes_1:
-                value1 = value + 0
+                value1 = value + self.__generate_values(self.__ski_resort[node.name], node_1)
                 temp_time_elapsed1 = temp_time_elapsed + node_1.length
                 times,prev = self.__dijkstras_traversal(node_1.name, True)
                 time_from_start = times[self.__start]
@@ -416,7 +480,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     #####################################
     # GROUP A Skill: Recursive algorithms
     #####################################
-    def __find_values(self,adjacent_nodes,count,temp_time_elapsed, priorities, value, values, ignore_way_home): #A recursive function to find the values of the possible routes from the current node
+    def __find_values(self,adjacent_nodes,count,temp_time_elapsed, priorities, value, values, ignore_way_home, previous_node): #A recursive function to find the values of the possible routes from the current node
         if count >= 2: #base case determining the search depth through the graph
             for node_1 in adjacent_nodes:
                 temp_time_elapsed += node_1.length
@@ -427,14 +491,14 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 time_from_start = times[self.__start]
                 time_value = 0
                 time_value = self.__length - temp_time_elapsed - time_from_start
-                node_value = 0 #generate value
+                node_value = self.__generate_values(self.__ski_resort[previous_node.name], node_1)
                 value += node_value
                 if time_value < 0: #If the time to get back to the starting node is greater than the time left in the route, the value is the time to get back to the starting node
                     values.append(time_value)
                 else: #If the time to get back to the starting node is less than the time left in the route, the value is the desirability of the runs in the route
                     values.append(value)
                 temp_time_elapsed -= node_1.length
-                value -= 0 #generate value
+                value -= node_value
             count -= 1
             return priorities, values, count
         for node in adjacent_nodes: #Iterate through the adjacent nodes to calculate the values for each possible move
@@ -443,9 +507,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             count += 1
             temp_time_elapsed += node.length
             self.__ski_resort_object.increment_time(node.length)
-            node_value = 0 #generate value
+            node_value = self.__generate_values(self.__ski_resort[previous_node.name], node) #continue
             value += node_value
-            priorities,values,count = self.__find_values(self.__ski_resort[node.name].runs, count, temp_time_elapsed, priorities, value, values, ignore_way_home) #Call the function recursively
+            priorities,values,count = self.__find_values(self.__ski_resort[node.name].runs, count, temp_time_elapsed, priorities, value, values, ignore_way_home, node) #Call the function recursively
             value -= node_value
             self.__ski_resort_object.decrement_time(node.length)
             temp_time_elapsed -= node.length
@@ -474,7 +538,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             temp_time_elapsed = time_elapsed
             value = 0
             values = []
-            priorities, values, count = self.__find_values(adjacent_nodes,count,temp_time_elapsed, find_priorities, value, values, False)
+            priorities, values, count = self.__find_values(adjacent_nodes,count,temp_time_elapsed, find_priorities, value, values, False, chosen_node)
 
             if max(priorities) == -inf: #If all sequences of three moves have to pass through a closed lift or there is no route to the starting node without passing through a closed lift
                 continue_route = self.__should_route_continue(adjacent_nodes)     
@@ -484,7 +548,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 temp_time_elapsed = time_elapsed
                 value = 0
                 values = []
-                priorities, values, count = self.__find_values(adjacent_nodes,count,temp_time_elapsed, find_priorities, value, values, True) #Finds the values of the possible routes but ignoring if there is no route to the starting node without passing through a closed lift
+                priorities, values, count = self.__find_values(adjacent_nodes,count,temp_time_elapsed, find_priorities, value, values, True, chosen_node) #Finds the values of the possible routes but ignoring if there is no route to the starting node without passing through a closed lift
                 
                 times, prev = self.__dijkstras_traversal(chosen_node.name, True)
                 time_from_start = times[self.__start]

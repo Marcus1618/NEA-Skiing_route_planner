@@ -153,26 +153,41 @@ class Terminal(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59", 0, "blue", "None")
 
     def __advanced_options(self):
+        weather = ""
+        as_close_to_time = ""
+        snow_conditions = ""
+        lift_type_preference = ""
+        altitude = ""
+        latitude = ""
+        longitude = ""
+        as_close_to_time_input = ""
         while as_close_to_time_input not in ["y","n"]:
             as_close_to_time_input = input("Do you want to return to the starting point as close to the time you specified as possible rather than always before it? (y/n): ")
         if as_close_to_time_input == "y":
             as_close_to_time = True
-        alititude = ""
+        else:
+            as_close_to_time = False
         while altitude not in ["y","n"]:
             altitude = input("Do you want to consider the snow conditions and weather at your resort? (y/n): ")
         if altitude == "y":
             while snow_conditions not in ["good","average","poor", "unknown"]:
                 snow_conditions = input("What are the snow conditions like ('good', 'average', 'poor' or 'unknown): ")
             while weather not in ["today","tomorrow","2 days time","3 days time","unknown"]:
-                weather = input("On what day are you skiing? (today, tomorrow, 2 days time, 3 days time or unknown): ")
+                weather = input("On what day are you skiing? ('today', 'tomorrow', '2 days time', '3 days time' or 'unknown'): ")
+            while not(re.match(r'^-?\d{1,2}\.\d{4}$', latitude)) and latitude != "N/A":
+                latitude = input("Enter the latitude of the resort (enter N/A if unknown): ")
+            while not(re.match(r'^-?\d{1,3}\.\d{4}$', longitude)) and longitude != "N/A":
+                longitude = input("Enter the longitude of the resort (enter N/A if unknown): ")
         else:
             snow_conditions = "unknown"
             weather = "unknown"
+            latitude = "N/A"
+            longitude = "N/A"
         while lift_type_preference not in ["gondola","chairlift","draglift","no preference"]:
             lift_type_preference = input("Do you want to use more of one type of ski lift than the others ('gondola', 'chairlift', 'draglift' or 'no preference'): ")
         #VALIDATE DATE
 
-        return as_close_to_time, snow_conditions, lift_type_preference, weather
+        return as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude
 
     def __generate_route(self): #Creates a route through a ski resort dependent on various user parameters
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
@@ -201,27 +216,25 @@ class Terminal(Ui):
         while max_difficulty not in ["green","blue","red","black","none"]:
             max_difficulty = input("What is the maximum difficulty of run that you want to ski on ('green', 'blue', 'red', 'black' or 'none'): ")
 
-        weather = ""
-        as_close_to_time = False
-        snow_conditions = ""
-        lift_type_preference = ""
         advanced_options = input("Do you want to enter further advanced options? (y/n): ") #Validation
         if advanced_options == "y":
-            as_close_to_time, snow_conditions, lift_type_preference, weather = self.__advanced_options()
+            as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude = self.__advanced_options()
         else:
             weather = "unknown"
             as_close_to_time = False
             snow_conditions = "unknown"
             lift_type_preference = "no preference"
+            latitude = "N/A"
+            longitude = "N/A"
 
-        route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather)
+        route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
         route, returned_to_start = route_planning.get_route(as_close_to_time) #Returns a list of dictionaries containing the node moved to and the time elapsed
 
         for i in range(len(route)-1):
             if route[i+1]["pause"] == True:
                 print(f"{i+1}. Break for {route[i+1]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(start_time,route[i+1]["time_elapsed"])}")
             else: #add lift/run from x to y
-                print(f"{i+1}. {route[i+1]["lift"].upper()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(start_time,route[i+1]['time_elapsed'])}")
+                print(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(start_time,route[i+1]['time_elapsed'])}")
 
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")

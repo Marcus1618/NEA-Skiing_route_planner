@@ -56,3 +56,54 @@ Val Thorens
 15. lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:29
 16. run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:33
 
+Test with values
+Val Thorens
+1. RUN from Plein Sud top to Pionniers bottom taking 5 minutes - 10:05
+2. RUN from Pionniers bottom to Plein Sud bottom taking 10 minutes - 10:15
+3. LIFT from Plein Sud bottom to Plein Sud top taking 10 minutes - 10:25
+4. RUN from Plein Sud top to Pionniers top taking 1 minutes - 10:26
+5. RUN from Pionniers top to 3 Vallees bottom taking 1 minutes - 10:27
+6. RUN from 3 Vallees bottom to Plein Sud bottom taking 15 minutes - 10:42
+7. LIFT from Plein Sud bottom to Plein Sud top taking 10 minutes - 10:52
+8. RUN from Plein Sud top to Pionniers top taking 1 minutes - 10:53
+9. RUN from Pionniers top to 3 Vallees bottom taking 1 minutes - 10:54
+10. LIFT from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 11:00
+11. RUN from 3 Vallees top to 3 Vallees bottom taking 5 minutes - 11:05
+12. LIFT from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 11:11
+13. RUN from 3 Vallees top to Plein Sud top taking 4 minutes - 11:15
+14. RUN from Plein Sud top to Pionniers top taking 1 minutes - 11:16
+15. RUN from Pionniers top to 3 Vallees bottom taking 1 minutes - 11:17
+16. LIFT from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 11:23
+17. RUN from 3 Vallees top to Plein Sud top taking 4 minutes - 11:27
+
+Hot_weather_Cambridge
+Val Thorens
+1. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:01
+2. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:02
+3. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:08
+4. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:12
+5. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:13
+6. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:14
+7. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:20
+8. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:24
+9. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:25
+10. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:26
+11. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:32
+12. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:36
+13. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:37
+14. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:38
+15. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:44
+16. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:48
+17. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:49
+18. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:50
+19. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:56
+20. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 10:00
+21. Run from Plein Sud top to Pionniers top taking 1 minutes - 10:01
+22. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 10:02
+23. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 10:08
+24. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 10:12
+25. Run from Plein Sud top to Pionniers top taking 1 minutes - 10:13
+26. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 10:14
+27. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 10:20
+28. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 10:24
+
