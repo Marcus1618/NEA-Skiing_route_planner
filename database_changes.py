@@ -11,9 +11,9 @@ def add_resort_to_database(ski_resort_object, new_resort_name):
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()
             for node in ski_resort_object.resorts[new_resort_name].nodes.values():
-                node_insertion = """INSERT INTO nodes (node_name, resort_name, altitude)
-                                    VALUES (?,?,?);"""
-                cursor.execute(node_insertion, [node.name, new_resort_name, node.altitude])
+                node_insertion = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
+                                    VALUES (?,?,?,?,?,?);"""
+                cursor.execute(node_insertion, [node.name, new_resort_name, node.altitude, node.node_type, node.length, node.amenity_type])
             for node in ski_resort_object.resorts[new_resort_name].nodes.values():
                 select_node_id = "SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?;"
                 cursor.execute(select_node_id, [node.name, new_resort_name])
@@ -38,11 +38,17 @@ def sync_from_database(ski_resort_object):
             resort_names = set(cursor.fetchall())
             for resort in resort_names:
                 ski_resort_object.add_resort(resort[0])
-                node_query = "SELECT node_id, node_name, altitude FROM nodes WHERE resort_name=?;"
+                node_query = "SELECT node_id, node_name, altitude, node_type, ski_park_length, amenity_type FROM nodes WHERE resort_name=?;"
                 cursor.execute(node_query, [resort[0]])
                 nodes = cursor.fetchall()
                 for node in nodes:
-                    ski_resort_object.resorts[resort[0]].add_ski_node(node[1],node[2])
+                    node_type = node[3]
+                    if node_type == "Ski lift station":
+                        ski_resort_object.resorts[resort[0]].add_ski_node(node[1],node[2])
+                    elif node_type == "Amenity":
+                        ski_resort_object.resorts[resort[0]].add_amenity(node[1],node[2],node[5])
+                    elif node_type == "Ski park":
+                        ski_resort_object.resorts[resort[0]].add_ski_park(node[1],node[2],node[4])                    
                     run_query = "SELECT * FROM runs WHERE node_id=?;"
                     cursor.execute(run_query, [node[0]])
                     runs = cursor.fetchall()

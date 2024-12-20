@@ -2,7 +2,6 @@ from Ui import Ui
 from route_planner import Plan_route
 import re
 import sqlite3
-import copy
 from math import inf
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 from display_graph import Display_graph
@@ -24,7 +23,10 @@ class Terminal(Ui):
                                     node_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     node_name TEXT NOT NULL,
                                     resort_name TEXT NOT NULL,
-                                    altitude INTEGER
+                                    altitude INTEGER,
+                                    node_type TEXT,
+                                    ski_park_length INTEGER,
+                                    amenity_type TEXT
                                 );"""
                 cursor.execute(create_nodes_table)
                 create_runs_table = """CREATE TABLE IF NOT EXISTS runs (
@@ -58,22 +60,25 @@ class Terminal(Ui):
             option = input("Enter the number of the option that you want to select: ")
 
         if option == "1":
-            self.__generate_route()
-            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            self.__generate_route()            
+            while option not in ["m","q"]:
+                option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
             if option == "m":
                 self.menu()
             elif option == "q":
                 quit()
         elif option == "2":
             self.__create_ski_resort()
-            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            while option not in ["m","q"]:
+                option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
             if option == "m":
                 self.menu()
             elif option == "q":
                 quit()
         elif option == "3":
             self.__modify_ski_resort()
-            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            while option not in ["m","q"]:
+                option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
             if option == "m":
                 self.menu()
             elif option == "q":
@@ -86,14 +91,16 @@ class Terminal(Ui):
             while ski_resort_name not in self.__saved_ski_resorts.resorts.keys():
                 ski_resort_name = input(f"Enter the name of the ski resort that you want to display: ({', '.join(self.__saved_ski_resorts.resorts.keys())})\n")
             Display_graph().display_ski_resort(self.__saved_ski_resorts.resorts[ski_resort_name])
-            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            while option not in ["m","q"]:
+                option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
             if option == "m":
                 self.menu()
             elif option == "q":
                 quit()
         elif option == "5":
             self.__delete_ski_resort()
-            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            while option not in ["m","q"]:
+                option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
             if option == "m":
                 self.menu()
             elif option == "q":
@@ -101,14 +108,17 @@ class Terminal(Ui):
         elif option == "6":
             previous_route_names = get_route_names()
             if len(previous_route_names) != 0:
-                route_name = input(f"Enter the name of the route that you want to view: ({", ".join(previous_route_names)})\n") #validate
+                route_name = ""
+                while route_name not in previous_route_names:
+                    route_name = input(f"Enter the name of the route that you want to view: ({", ".join(previous_route_names)})\n")
                 route_to_display, resort_name = view_previous_route(route_name)
                 print(f"\nRoute '{route_name}' in {resort_name}:")
                 for line in route_to_display:
                     print(line)
             else:
                 print("There are no routes saved.")
-            option = input("Enter 'm' to return to the main menu or 'q' to quit: ") #validate
+            while option not in ["m","q"]:
+                option = input("Enter 'm' to return to the main menu or 'q' to quit: ")
             if option == "m":
                 self.menu()
             elif option == "q":
@@ -130,6 +140,21 @@ class Terminal(Ui):
             mins = f"0{mins}"
         return f"{hours}:{mins}"
     
+    def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2
+        h1, m1 = t1.split(":")
+        h2, m2 = t2.split(":")
+        if int(h1) > int(h2):
+            return True
+        elif int(h1) == int(h2) and int(m1) > int(m2):
+            return True
+        else:
+            return False
+    
+    def __time_difference(self, t1, t2): #Returns the difference between two times where t1 and t2 are in the format hh:mm
+        h1, m1 = t1.split(":")
+        h2, m2 = t2.split(":")
+        return (int(h2)*60 + int(m2)) - (int(h1)*60 + int(m1))
+    
     def __construct_example_ski_resort(self): #Creates an example ski resort with ski lift stations and runs - only stored locally in the program
         ######################
         # GROUP A Skill: Graph
@@ -138,10 +163,10 @@ class Terminal(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Plein Sud bottom", 2300)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00", 1, "None", "chairlift")
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Plein Sud top",2600)
-        self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5, "00:00", "23:59", 0, "blue", "None")
+        self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("La folie douce", 2, "00:00", "23:59", 0, "blue", "None")
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1, "00:00", "23:59", 0, "blue", "None")
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_node("3 Vallees bottom",2500)
-        self.__saved_ski_resorts.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15, "00:00", "23:59", 0, "blue", "None")
+        self.__saved_ski_resorts.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Snow park 1",5, "00:00", "23:59", 0, "blue", "None")
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6, "08:30", "16:00" , 1, "None", "gondola")
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_node("3 Vallees top",3000)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5, "00:00", "23:59", 0, "black", "None")
@@ -151,6 +176,10 @@ class Terminal(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4, "08:00", "16:30", 1, "None", "chairlift")
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_node("Pionniers top",2550)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59", 0, "blue", "None")
+        self.__saved_ski_resorts.resorts["Val Thorens"].add_amenity("La folie douce", 2550, "restaurant")
+        self.__saved_ski_resorts.resorts["Val Thorens"].nodes["La folie douce"].add_run("Pionniers bottom", 3, "00:00", "23:59", 0, "blue", "None")
+        self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_park("Snow park 1", 2400, 4)
+        self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Snow park 1"].add_run("Plein Sud bottom", 10, "00:00", "23:59", 0, "blue", "None")
 
     def __advanced_options(self):
         weather = ""
@@ -185,7 +214,6 @@ class Terminal(Ui):
             longitude = "N/A"
         while lift_type_preference not in ["gondola","chairlift","draglift","no preference"]:
             lift_type_preference = input("Do you want to use more of one type of ski lift than the others ('gondola', 'chairlift', 'draglift' or 'no preference'): ")
-        #VALIDATE DATE
 
         return as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude
 
@@ -193,13 +221,15 @@ class Terminal(Ui):
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
         self.__construct_example_ski_resort()
-        length = "0.00"
+        length = "00:00"
         valid = None
         while valid == None:
             length = input("How long do you want to ski for (hh:mm): ")
 
             if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', length):
                 valid = True
+        h,m = length.split(":")
+        length = int(h)*60 + int(m)
 
         ski_resort = ""
         while ski_resort not in self.__saved_ski_resorts.resorts.keys():
@@ -208,15 +238,76 @@ class Terminal(Ui):
         start = ""
         while start not in self.__saved_ski_resorts.resorts[ski_resort].nodes.keys():
             start = input(f"From which ski lift station do you want to start your route: ({', '.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})\n")
+        original_start = start
 
         start_time = "00:00"
-        start_time = input("At what time do you want to start your route (hh:mm): ") #ADD VALIDATION - between opening and closing times + right format
+        valid = None
+        while valid == None:
+            start_time = input("At what time do you want to start your route (hh:mm): ")
+            if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
+                valid = True
+        route_start_time = start_time
+        route_stop_time = self.__add_times(start_time, length)
 
         max_difficulty = ""
-        while max_difficulty not in ["green","blue","red","black","none"]:
-            max_difficulty = input("What is the maximum difficulty of run that you want to ski on ('green', 'blue', 'red', 'black' or 'none'): ")
+        while max_difficulty not in ["green","blue","red","black","unknown"]:
+            max_difficulty = input("What is the maximum difficulty of run that you want to ski on ('green', 'blue', 'red', 'black' or 'unknown'): ")
 
-        advanced_options = input("Do you want to enter further advanced options? (y/n): ") #Validation
+        breaks_data = []
+        breaks = ""
+        while breaks not in ["y","n"]:
+            breaks = input("Do you want to take breaks during your skiing time e.g. for lunch or at ski parks? (y/n): ")
+        break_type = "None"
+        amenity_name = "None"
+        break_time = ""
+        break_length = 0
+        park_repetitions = 0
+        if breaks == "y":
+            while breaks == "y":
+                break_type = ""
+                while break_type not in ["restaurant/amenity","ski park"]:
+                    break_type = input("What type of break do you want to take ('restaurant/amenity' or 'ski park'): ")
+                if break_type == "restaurant/amenity":
+                    amenity_name = ""
+                    while amenity_name not in self.__saved_ski_resorts.resorts[ski_resort].amenity_names:
+                        amenity_name = input(f"Enter the name of the restaurant/amenity that you want to stop at ({self.__saved_ski_resorts.resorts[ski_resort].amenity_names}): ")
+                else:
+                    amenity_name = ""
+                    while amenity_name not in self.__saved_ski_resorts.resorts[ski_resort].ski_park_names:
+                        amenity_name = input(f"Enter the name of the ski park that you want to stop at ({self.__saved_ski_resorts.resorts[ski_resort].ski_park_names}): ")
+
+                valid = None
+                while valid == None:
+                    break_time = input("At what time do you want to visit this amenity (hh:mm): ")
+                    if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
+                        if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
+                            valid = True
+                        else:
+                            print("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
+
+                if break_type == "restaurant/amenity":
+                    break_length = 0
+                    allowed_time = self.__time_difference(break_time, route_stop_time)
+                    valid = False
+                    while valid == False:
+                        break_length = int(input("How long do you want to spend at this restaurant/amenity (minutes): "))
+                        if break_length > 0:
+                            if break_length <= allowed_time:
+                                valid = True
+                            else:
+                                print("Error. The break cannot extend past the desired end time of this route.")
+                elif break_type == "ski park":
+                    park_repetitions = 0
+                    while park_repetitions < 1:
+                        park_repetitions = int(input("How many times do you want to ski the ski park: "))
+                breaks = ""
+                while breaks not in ["y","n"]:
+                    breaks = input("Do you want to take another break during your skiing time? (y/n): ")
+                breaks_data.append([break_type, amenity_name, break_time, break_length, park_repetitions])
+
+        advanced_options = ""
+        while advanced_options not in ["y","n"]:
+            advanced_options = input("Do you want to enter further advanced options? (y/n): ")
         if advanced_options == "y":
             as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude = self.__advanced_options()
         else:
@@ -227,22 +318,56 @@ class Terminal(Ui):
             latitude = "N/A"
             longitude = "N/A"
 
-        route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
-        route, returned_to_start = route_planning.get_route(as_close_to_time) #Returns a list of dictionaries containing the node moved to and the time elapsed
+        route = [{"start":start,"time_elapsed":0,"pause":False,"lift":None,"break":False}]
+        time_elapsed = 0
+        for plan_num in range(len(breaks_data)+1):
+            if len(breaks_data) > 0:
+                if plan_num > 0:
+                    start_time = self.__add_times(route_start_time, time_elapsed)
+                if plan_num < len(breaks_data):
+                    end_time = breaks_data[plan_num][2]
+                    length = self.__time_difference(route_start_time,end_time)
+                    end_node = breaks_data[plan_num][1]
+                else:
+                    length = self.__time_difference(route_start_time,route_stop_time)
+                    end_node = original_start
+                route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], end_node, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
+                route, returned_to_start = route_planning.get_route(as_close_to_time, route, start, time_elapsed)
 
+                if not returned_to_start:
+                    break
+                if plan_num < len(breaks_data):
+                    time_elapsed = route[-1]["time_elapsed"]
+                    if breaks_data[plan_num][0] == "restaurant/amenity":
+                        wait_length = breaks_data[plan_num][3]
+                        route.append({"start":route[-1]["start"],"time_elapsed":time_elapsed+wait_length,"pause":False,"lift":None,"break":True})
+                    elif breaks_data[plan_num][0] == "ski park":
+                        ski_park_length = breaks_data[plan_num][4]*self.__saved_ski_resorts.resorts[ski_resort].nodes[breaks_data[plan_num][1]].length
+                        route.append({"start":route[-1]["start"],"time_elapsed":time_elapsed+ski_park_length,"pause":False,"lift":None,"break":True})
+                if plan_num < len(breaks_data):
+                    start = breaks_data[plan_num][1]
+                    time_elapsed = route[-1]["time_elapsed"]
+            else:
+                route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
+                route, returned_to_start = route_planning.get_route(as_close_to_time, route, start, time_elapsed) #Returns a list of dictionaries containing the node moved to and the time elapsed
+        print(route)
         for i in range(len(route)-1):
             if route[i+1]["pause"] == True:
-                print(f"{i+1}. Break for {route[i+1]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(start_time,route[i+1]["time_elapsed"])}")
+                print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
+            elif route[i+1]["break"] == True:
+                print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({self.__saved_ski_resorts.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
             else: #add lift/run from x to y
-                print(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(start_time,route[i+1]['time_elapsed'])}")
+                print(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(route_start_time,route[i+1]['time_elapsed'])}")
 
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
 
-        save = input("Do you want to save this route? (y/n): ") #ADD THIS TO OBJECTIVES + ADD FUNCTIONAILTY
+        save = input("Do you want to save this route? (y/n): ")
         if save == "y":
-            route_name = input("Enter the name of the route: ") #Validate - must be unique
-            save_route(route_name, route, start_time, returned_to_start, ski_resort)
+            previous_route_names = get_route_names()
+            while route_name in previous_route_names or not(re.match('(^[a-z]|[A-Z]).*$',route_name)):
+                route_name = input("Enter the name of the route: ")
+            save_route(route_name, route, route_start_time, returned_to_start, ski_resort, self.__saved_ski_resorts)
 
     ################################################################################################
     # GROUP A Skill: Dynamic generation of objects based on complex user-defined use of an OOP model
@@ -266,8 +391,21 @@ class Terminal(Ui):
                         node_name = input(f"Enter the name of the ski lift station: (No previously created stations)\n")
                     else:
                         node_name = input(f"Enter the name of the ski lift station: (Previously created ski lift stations: {', '.join(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})\n")
+                node_type = ""
+                while node_type not in ["s","p","a"]:
+                    node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
                 altitude = input("Enter the altitude of the ski lift station: ") #Validation
-                self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(node_name,altitude)
+                if node_type == "p":
+                    ski_park_length = 0
+                    while ski_park_length < 1:
+                        ski_park_length = int(input("Enter the length of the ski park (minutes): "))
+                    self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_park(node_name,altitude,ski_park_length)
+                elif node_type == "a":
+                    amenity_type = ""
+                    amenity_type = input("Enter a description of the type of amenity e.g. restaurant: ")
+                    self.__saved_ski_resorts.resorts[ski_resort_name].add_amenity(node_name,altitude,amenity_type)
+                elif node_type == "s":
+                    self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(node_name,altitude)
                 creating_run = "y"
                 while creating_run == "y": #Allow at least one run to be created from each ski lift station
                     run_name = ""
@@ -284,10 +422,12 @@ class Terminal(Ui):
                     lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
                     if lift == "l":
                         lift = 1
+                        lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                        difficulty = "none"
                     elif lift == "r":
                         lift = 0
-                    difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
-                    lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
+                        lift_type = "none"
+                        difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
                     self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
                     creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
             elif create_node == "n":
@@ -336,10 +476,10 @@ class Terminal(Ui):
                 for run in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs:
                     if run.name not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes:
                         incomplete_nodes = True
-        
+        if self.__saved_ski_resorts.resorts[ski_resort_name].nodes == {}:
+            print("There are no ski lift stations in this ski resort so it has not been created.")
         add_resort_to_database(self.__saved_ski_resorts, ski_resort_name) #Add the ski resorts created in the program to the database
-
-        #display ski resort
+        Display_graph().display_ski_resort(self.__saved_ski_resorts.resorts[ski_resort_name]) #display ski resort
 
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
@@ -364,7 +504,7 @@ class Terminal(Ui):
                 while modify not in ["1","2","3"]:
                     modify = input("What do you want to modify?\n1. Add a new ski lift station\n2. Add a new run or lift\n3. Modify an existing run\n")
                 
-                if modify == "1":
+                if modify == "1": #add a new ski lift station
                     select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
                     cursor.execute(select_nodes, [ski_resort_to_modify])
                     node_names_unpacked = cursor.fetchall()
@@ -377,10 +517,27 @@ class Terminal(Ui):
                             node_name = input(f"Enter the name of the ski lift station that you want to create: (No previously created stations)\n")
                         else:
                             node_name = input(f"Enter the name of the ski lift station that you want to create: (Previously created ski lift stations: {', '.join(node_names)})\n")
+                    node_type = ""
+                    while node_type not in ["s","p","a"]:
+                        node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
                     altitude = input("Enter the altitude of the ski lift station: ") #Validation
-                    add_node = """INSERT INTO nodes (node_name, resort_name, altitude)
-                                    VALUES (?,?,?);"""
-                    cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude])
+                    if node_type == "p":
+                        ski_park_length = 0
+                        while ski_park_length < 1:
+                            ski_park_length = int(input("Enter the length of the ski park (minutes): "))
+                        add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
+                                    VALUES (?,?,?,?,?,?);"""
+                        cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Ski park", ski_park_length, "None"])
+                    elif node_type == "a":
+                        amenity_type = ""
+                        amenity_type = input("Enter a description of the type of amenity e.g. restaurant: ")
+                        add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
+                                    VALUES (?,?,?,?,?,?);"""
+                        cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Amenity", 0, amenity_type])
+                    elif node_type == "s":
+                        add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
+                                    VALUES (?,?,?,?,?,?);"""
+                        cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Ski lift station", 0, "None"])
                     creating_run = "y"
                     while creating_run == "y": #Allow at least one run to be created from each ski lift station
                         select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
@@ -407,10 +564,12 @@ class Terminal(Ui):
                         lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
                         if lift == "l":
                             lift = 1
+                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                            difficulty = "none"
                         elif lift == "r":
                             lift = 0
-                        difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
-                        lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
+                            lift_type = "none"
+                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
                         add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
                                     VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
                         cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
@@ -455,10 +614,12 @@ class Terminal(Ui):
                             lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
                             if lift == "l":
                                 lift = 1
+                                lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                                difficulty = "none"
                             elif lift == "r":
                                 lift = 0
-                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
-                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
+                                lift_type = "none"
+                                difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
                             add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
                                         VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
                             cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])

@@ -1,3 +1,4 @@
+from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 FILE_NAME = "saved_routes.txt"
 
 def add_times(t1, t2): #Adds two times together where t1 is in the format hh:mm and t2 is just an integer number of minutes
@@ -39,15 +40,17 @@ def view_previous_route(route_name):
                     output_route.append(line)
     return output_route, route_lines[1]
 
-def save_route(route_name, route, start_time, returned_to_start, ski_resort):
+def save_route(route_name, route, route_start_time, returned_to_start, ski_resort, ski_resort_object):
     with open(FILE_NAME, "a") as f:
         f.write(f"{route_name}\n")
-        f.write(f"{ski_resort}\n")
+        f.write(f"{ski_resort}\n")        
         for i in range(len(route)-1):
-            if route[i+1]["pause"] == True:
-                f.write(f"{i+1}. Break for {route[i+1]["time_elapsed"]} minutes due to ski lifts not yet being open - {add_times(start_time,route[i+1]["time_elapsed"])}\n")
-            else:
-                f.write(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {add_times(start_time,route[i+1]['time_elapsed'])}\n")
+                if route[i+1]["pause"] == True:
+                    f.write(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open - {add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                elif route[i+1]["break"] == True:
+                    f.write(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({ski_resort_object.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                else: #add lift/run from x to y
+                    f.write(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {add_times(route_start_time,route[i+1]['time_elapsed'])}")
 
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.\n")

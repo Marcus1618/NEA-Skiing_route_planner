@@ -1,5 +1,6 @@
 from math import inf
 import math
+from abc import ABC, abstractmethod
 
 ######################################################################################################################################################
 # GROUP A Skill: Complex user-defined use of a object-orientated programming model e.g. classes, inheritance, composition, polymorphism and interfaces
@@ -23,9 +24,31 @@ class Ski_resort():
         self.__name = name
         self.__nodes = {}
         self.__time = "00:00"
+        self.__amenity_names = []
+        self.__ski_park_names = []
     
     def add_ski_node(self,name,altitude):
         self.__nodes[name] = Ski_node(name,altitude)
+    
+    def add_ski_park(self,name,altitude,length):
+        self.__nodes[name] = Ski_park(name,altitude,length)
+        self.__ski_park_names.append(name)
+    
+    def add_amenity(self,name,altitude,amenity_type):
+        self.__nodes[name] = Amenity(name,altitude,amenity_type)
+        self.__amenity_names.append(name)
+    
+    @property
+    def name(self):
+        return self.__name
+    
+    @property
+    def amenity_names(self):
+        return self.__amenity_names
+    
+    @property
+    def ski_park_names(self):
+        return self.__ski_park_names
     
     @property
     def nodes(self):
@@ -109,11 +132,14 @@ class Ski_resort():
                 else:
                     run.length = run.open_length
   
-class Node(): #Make abstract methods
+class Node():
     def __init__(self,name, altitude):
         self._name = name
         self._altitude = altitude
         self.__runs = []
+        self.__node_type = "Node"
+        self.__length = 0
+        self.__amenity_type = "None"
 
     def add_run(self,name,length,opening,closing,lift,difficulty,lift_type):
         self.__runs.append(Run(name,length,opening,closing,lift,difficulty,lift_type))
@@ -133,10 +159,34 @@ class Node(): #Make abstract methods
     @altitude.setter
     def altitude(self,altitude):
         self._altitude = altitude
+    
+    @abstractmethod
+    def __repr__(self):
+        raise NotImplementedError
+    
+    @property
+    def node_type(self):
+        return self.__node_type
+    
+    @property
+    def length(self):
+        return self.__length
+    
+    @property
+    def amenity_type(self):
+        return self.__amenity_type
 
 class Ski_node(Node):
     def __init__(self,name,altitude):
         super().__init__(name,altitude)
+        self.__node_type = "Ski lift station"
+    
+    def __repr__(self):
+        return f"Ski node '{self._name}' - Altitude: {self._altitude}m"
+    
+    @property
+    def node_type(self):
+        return self.__node_type
     
 class Run():
     def __init__(self,name,length,opening,closing,lift,difficulty,lift_type):
@@ -187,9 +237,35 @@ class Run():
 
 #Do these later
 class Ski_park(Node):
-    def __init__(self,name,altitude):
+    def __init__(self,name,altitude, length):
         super().__init__(name,altitude)
+        self.__length = length
+        self.__node_type = "Ski park"
+    
+    def __repr__(self):
+        return f"Ski park of length {self.__length}m"
+    
+    @property
+    def length(self):
+        return self.__length
+
+    @property
+    def node_type(self):
+        return self.__node_type
 
 class Amenity(Node):
-    def __init__(self,name,altitude):
+    def __init__(self,name,altitude, amenity_type):
         super().__init__(name,altitude)
+        self.__amenity_type = amenity_type
+        self.__node_type = "Amenity"
+    
+    def __repr__(self):
+        return f"{self.__amenity_type}"
+    
+    @property
+    def amenity_type(self):
+        return self.__amenity_type
+    
+    @property
+    def node_type(self):
+        return self.__node_type

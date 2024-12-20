@@ -18,7 +18,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         self.__weather = weather
         self.__repeated_runs = {}
         self.__lift_type_preference = lift_type_preference
-        self.__length = self.__hours_to_minutes(length)
+        self.__length = length
         self.__ski_resort_object.time = start_time
         self.__ski_resort_object.check_open()
         if latitude != "N/A" and longitude != "N/A":
@@ -26,11 +26,6 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         else:
             self.__url_weather = Plan_route.URL_WEATHER
         self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
-        
-
-    def __hours_to_minutes(self,time): #Converts time from hh:mm format to minutes
-        h,m = time.split(":")
-        return int(h)*60 + int(m)
     
     def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2
         h1, m1 = t1.split(":")
@@ -285,7 +280,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 lift_or_run = "lift"
             else:
                 lift_or_run = "run"
-            route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+            route.append({"start":chosen_node_1.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run, "break":False})
             if (original_chosen_node.name,chosen_node_1.name) in self.__repeated_runs.keys():
                 self.__repeated_runs[(original_chosen_node.name,chosen_node_1.name)] += 1
             else:
@@ -296,7 +291,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 lift_or_run = "lift"
             else:
                 lift_or_run = "run"
-            route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+            route.append({"start":chosen_node_2.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run, "break":False})
             if (chosen_node_1.name,chosen_node_2.name) in self.__repeated_runs.keys():
                 self.__repeated_runs[(chosen_node_1.name,chosen_node_2.name)] += 1
             else:
@@ -339,7 +334,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 lift_or_run = "lift"
             else:
                 lift_or_run = "run"
-            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run, "break":False})
             if (original_chosen_node.name,chosen_node.name) in self.__repeated_runs.keys():
                 self.__repeated_runs[(original_chosen_node.name,chosen_node.name)] += 1
             else:
@@ -353,7 +348,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         time_elapsed += 1
         self.__ski_resort_object.increment_time(1)
         if route[-1]["pause"] == False:
-            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":True, "lift":None})
+            route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":True, "lift":None, "break":False})
         else: #If the route was already paused, increment the time of the pause
             route[-1]["time_elapsed"] = route[-1]["time_elapsed"] + 1
         return time_elapsed, route
@@ -445,7 +440,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             lift_or_run = "lift"
         else:
             lift_or_run = "run"
-        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run})
+        route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run, "break":False})
         if (original_chosen_node.name,chosen_node.name) in self.__repeated_runs.keys():
             self.__repeated_runs[(original_chosen_node.name,chosen_node.name)] += 1
         else:
@@ -472,7 +467,12 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             if run_length != inf: #Ensures that the run is only added to the route if it is open
                 time_elapsed += run_length
                 self.__ski_resort_object.increment_time(run_length)
-                temp_route.append({"start":route_to_finish[i+1],"time_elapsed":time_elapsed,"pause":False})
+                chosen_node = self.__ski_resort[route_to_finish[i]].runs[[run.name for run in self.__ski_resort[route_to_finish[i]].runs].index(route_to_finish[i+1])]
+                if chosen_node.lift:
+                    lift_or_run = "lift"
+                else:
+                    lift_or_run = "run"
+                temp_route.append({"start":chosen_node.name,"time_elapsed":time_elapsed,"pause":False, "lift":lift_or_run, "break":False})
             else:
                 break
         return temp_route
@@ -522,11 +522,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
-    def get_route(self, as_close_to_time): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node
-        time_elapsed = 0
+    def get_route(self, as_close_to_time, route, start, time_elapsed): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node
         complete = False
-        route = [{"start":self.__start,"time_elapsed":0,"pause":False,"lift":None}]
-        chosen_node = self.__ski_resort[self.__start]
+        chosen_node = self.__ski_resort[start]
         returned_to_start = True
         previous_route_length = self.__length
 
