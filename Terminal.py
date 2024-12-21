@@ -746,5 +746,4 @@ class Terminal(Ui):
 #TESTING
 if __name__ == "__main__":
     ui = Terminal()
-    #ui.__generate_route()
     ui.menu()
