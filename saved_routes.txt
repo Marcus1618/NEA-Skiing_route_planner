@@ -110,3 +110,6 @@ Val Thorens
 Breaks
 Val Thorens
 
+GUI_route
+Val Thorens
+1. Lift from Plein Sud bottom to Plein Sud top taking 10 minutes - 09:102. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:113. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:124. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:185. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:226. Run from Plein Sud top to La folie douce taking 2 minutes - 09:247. Break for 15 minutes at La folie douce (restaurant) - 09:398. Run from La folie douce to Pionniers bottom taking 3 minutes - 09:429. Run from Pionniers bottom to Plein Sud bottom taking 10 minutes - 09:52

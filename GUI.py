@@ -18,6 +18,9 @@ class Gui(Ui):
         self.__window_display = None
         self.__window_view = None
         self.__window_view_output = None
+        self.__window_delete = None
+        self.__window_generate = None
+        self.__window_advanced_options = None
         ###############################################
         # GROUP A Skill: Complex data model in database
         ###############################################
@@ -207,6 +210,7 @@ class Gui(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Snow park 1"].add_run("Plein Sud bottom", 10, "00:00", "23:59", 0, "blue", "None")
 
     def __advanced_options(self):
+        quit_generate = False
         weather = ""
         as_close_to_time = ""
         snow_conditions = ""
@@ -215,126 +219,463 @@ class Gui(Ui):
         latitude = ""
         longitude = ""
         as_close_to_time_input = ""
-        while as_close_to_time_input not in ["y","n"]:
-            as_close_to_time_input = input("Do you want to return to the starting point as close to the time you specified as possible rather than always before it? (y/n): ")
-        if as_close_to_time_input == "y":
-            as_close_to_time = True
-        else:
-            as_close_to_time = False
-        while altitude not in ["y","n"]:
-            altitude = input("Do you want to consider the snow conditions and weather at your resort? (y/n): ")
+
+        generate_layout = [
+            [sg.Text("Do you want to return to the starting point as close to the time you specified as possible rather than always before it? (y/n):", key = "-text-")],
+            [sg.InputText(key="-text_input-")],
+            [sg.Button("Submit", key="-submit-")],
+            [sg.Button("Cancel", key="-cancel-")],
+            [sg.Button("Return to menu", key="-return-")]
+        ]
+        self.__window_advanced_options = sg.Window("Advanced route requirements", generate_layout)
+
+        quit_options = False
+        while not quit_options and not quit_generate:
+            event, values = self.__window_advanced_options.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                quit_options = True
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_advanced_options["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in ["y","n"]:
+                    quit_options = True
+                    as_close_to_time = values["-text_input-"]
+                    if as_close_to_time_input == "y":
+                        as_close_to_time = True
+                    else:
+                        as_close_to_time = False
+                else:
+                    sg.popup("Error. The input must be 'y' or 'n'.")
+                    self.__window_advanced_options["-text_input-"].update("")
+        
+        quit_options = True
+        self.__window_advanced_options["-text_input-"].update("")
+        self.__window_advanced_options["-text-"].update(f"Do you want to consider the snow conditions and weather at your resort? (y/n):")
+        while quit_options and not quit_generate:
+            event, values = self.__window_advanced_options.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                quit_options = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_advanced_options["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in ["y","n"]:
+                    quit_options = False
+                    altitude = values["-text_input-"]
+                else:
+                    sg.popup("Error. The input must be 'y' or 'n'.")
+                    self.__window_advanced_options["-text_input-"].update("")
+
         if altitude == "y":
-            while snow_conditions not in ["good","average","poor", "unknown"]:
-                snow_conditions = input("What are the snow conditions like ('good', 'average', 'poor' or 'unknown): ")
-            while weather not in ["today","tomorrow","2 days time","3 days time","unknown"]:
-                weather = input("On what day are you skiing? ('today', 'tomorrow', '2 days time', '3 days time' or 'unknown'): ")
-            while not(re.match(r'^-?\d{1,2}\.\d{4}$', latitude)) and latitude != "N/A":
-                latitude = input("Enter the latitude of the resort (enter N/A if unknown): ")
-            while not(re.match(r'^-?\d{1,3}\.\d{4}$', longitude)) and longitude != "N/A":
-                longitude = input("Enter the longitude of the resort (enter N/A if unknown): ")
+            quit_options = True
+            self.__window_advanced_options["-text_input-"].update("")
+            self.__window_advanced_options["-text-"].update(f"What are the snow conditions like ('good', 'average', 'poor' or 'unknown):")
+            while quit_options and not quit_generate:
+                event, values = self.__window_advanced_options.read()
+                if event == "-return-" or event == sg.WIN_CLOSED:
+                    quit_options = False
+                    quit_generate = True
+                elif event == "-cancel-":
+                    self.__window_advanced_options["-text_input-"].update("")
+                elif event == "-submit-":
+                    if values["-text_input-"] in ["good","average","poor","unknown"]:
+                        quit_options = False
+                        snow_conditions = values["-text_input-"]
+                    else:
+                        sg.popup("Error. The input must be 'good', 'average', 'poor' or 'unknown'.")
+                        self.__window_advanced_options["-text_input-"].update("")
+            quit_options = True
+            self.__window_advanced_options["-text_input-"].update("")
+            self.__window_advanced_options["-text-"].update(f"On what day are you skiing? ('today', 'tomorrow', '2 days time', '3 days time' or 'unknown'):")
+            while quit_options and not quit_generate:
+                event, values = self.__window_advanced_options.read()
+                if event == "-return-" or event == sg.WIN_CLOSED:
+                    quit_options = False
+                    quit_generate = True
+                elif event == "-cancel-":
+                    self.__window_advanced_options["-text_input-"].update("")
+                elif event == "-submit-":
+                    if values["-text_input-"] in ["today","tomorrow","2 days time","3 days time","unknown"]:
+                        quit_options = False
+                        weather = values["-text_input-"]
+                    else:
+                        sg.popup("Error. The input must be 'today', 'tomorrow', '2 days time', '3 days time' or 'unknown'.")
+                        self.__window_advanced_options["-text_input-"].update("")
+            quit_options = True
+            self.__window_advanced_options["-text_input-"].update("")
+            self.__window_advanced_options["-text-"].update(f"Enter the latitude of the resort (enter N/A if unknown):")
+            while quit_options and not quit_generate:
+                event, values = self.__window_advanced_options.read()
+                if event == "-return-" or event == sg.WIN_CLOSED:
+                    quit_options = False
+                    quit_generate = True
+                elif event == "-cancel-":
+                    self.__window_advanced_options["-text_input-"].update("")
+                elif event == "-submit-":
+                    if re.match(r'^-?\d{1,2}\.\d{4}$', values["-text_input-"]) or values["-text_input-"] == "N/A":
+                        quit_options = False
+                        latitude = values["-text_input-"]
+                    else:
+                        sg.popup("Error. The latitude must be in the format xx.xxxx.")
+                        self.__window_advanced_options["-text_input-"].update("")
+            quit_options = True
+            self.__window_advanced_options["-text_input-"].update("")
+            self.__window_advanced_options["-text-"].update(f"Enter the longitude of the resort (enter N/A if unknown):")
+            while quit_options and not quit_generate:
+                event, values = self.__window_advanced_options.read()
+                if event == "-return-" or event == sg.WIN_CLOSED:
+                    quit_options = False
+                    quit_generate = True
+                elif event == "-cancel-":
+                    self.__window_advanced_options["-text_input-"].update("")
+                elif event == "-submit-":
+                    if re.match(r'^-?\d{1,3}\.\d{4}$', values["-text_input-"]) or values["-text_input-"] == "N/A":
+                        quit_options = False
+                        longitude = values["-text_input-"]
+                    else:
+                        sg.popup("Error. The longitude must be in the format xx.xxxx.")
+                        self.__window_advanced_options["-text_input-"].update("")
         else:
             snow_conditions = "unknown"
             weather = "unknown"
             latitude = "N/A"
             longitude = "N/A"
-        while lift_type_preference not in ["gondola","chairlift","draglift","no preference"]:
-            lift_type_preference = input("Do you want to use more of one type of ski lift than the others ('gondola', 'chairlift', 'draglift' or 'no preference'): ")
 
-        return as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude
+        quit_options = True
+        self.__window_advanced_options["-text_input-"].update("")
+        self.__window_advanced_options["-text-"].update(f"Do you want to use more of one type of ski lift than the others ('gondola', 'chairlift', 'draglift' or 'no preference'):")
+        while quit_options and not quit_generate:
+            event, values = self.__window_advanced_options.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                quit_options = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_advanced_options["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in ["gondola","chairlift","draglift","no preference"]:
+                    quit_options = False
+                    lift_type_preference = values["-text_input-"]
+                else:
+                    sg.popup("Error. The input must be 'gondola', 'chairlift', 'draglift' or 'no preference'.")
+                    self.__window_advanced_options["-text_input-"].update("")
+
+        self.__window_advanced_options.close()
+        return as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude, quit_generate
 
     def __generate_route(self): #Creates a route through a ski resort dependent on various user parameters
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
         self.__construct_example_ski_resort()
-        length = "00:00"
-        valid = None
-        while valid == None:
-            length = input("How long do you want to ski for (hh:mm): ")
+        generate_layout = [
+            [sg.Text("How long do you want to ski for (hh:mm):", key = "-text-")],
+            [sg.InputText(key="-text_input-")],
+            [sg.Button("Submit", key="-submit-")],
+            [sg.Button("Cancel", key="-cancel-")],
+            [sg.Button("Return to menu", key="-return-")]
+        ]
+        self.__window_generate = sg.Window("Route requirements", generate_layout)
 
-            if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', length):
-                valid = True
-        h,m = length.split(":")
-        length = int(h)*60 + int(m)
+        quit_generate = False
+        generate_loop = True
+        while generate_loop:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                try:
+                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                        generate_loop = False
+                        length = values["-text_input-"]
+                        h,m = length.split(":")
+                        length = int(h)*60 + int(m)
+                    else:
+                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                        self.__window_generate["-text_input-"].update("")
+                except:
+                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                    self.__window_generate["-text_input-"].update("")
 
-        ski_resort = ""
-        while ski_resort not in self.__saved_ski_resorts.resorts.keys():
-            ski_resort = input(f"Which ski resort are you in: ({', '.join(self.__saved_ski_resorts.resorts.keys())})\n")
-
-        start = ""
-        while start not in self.__saved_ski_resorts.resorts[ski_resort].nodes.keys():
-            start = input(f"From which ski lift station do you want to start your route: ({', '.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})\n")
-        original_start = start
-
-        start_time = "00:00"
-        valid = None
-        while valid == None:
-            start_time = input("At what time do you want to start your route (hh:mm): ")
-            if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
-                valid = True
-        route_start_time = start_time
-        route_stop_time = self.__add_times(start_time, length)
-
-        max_difficulty = ""
-        while max_difficulty not in ["green","blue","red","black","unknown"]:
-            max_difficulty = input("What is the maximum difficulty of run that you want to ski on ('green', 'blue', 'red', 'black' or 'unknown'): ")
-
-        breaks_data = []
-        breaks = ""
-        while breaks not in ["y","n"]:
-            breaks = input("Do you want to take breaks during your skiing time e.g. for lunch or at ski parks? (y/n): ")
-        break_type = "None"
-        amenity_name = "None"
-        break_time = ""
-        break_length = 0
-        park_repetitions = 0
-        if breaks == "y":
-            while breaks == "y":
-                break_type = ""
-                while break_type not in ["restaurant/amenity","ski park"]:
-                    break_type = input("What type of break do you want to take ('restaurant/amenity' or 'ski park'): ")
-                if break_type == "restaurant/amenity":
-                    amenity_name = ""
-                    while amenity_name not in self.__saved_ski_resorts.resorts[ski_resort].amenity_names:
-                        amenity_name = input(f"Enter the name of the restaurant/amenity that you want to stop at ({self.__saved_ski_resorts.resorts[ski_resort].amenity_names}): ")
+        if not quit_generate:
+            generate_loop = True
+            self.__window_generate["-text_input-"].update("")
+            self.__window_generate["-text-"].update(f"Which ski resort are you in:\n({'\n'.join(self.__saved_ski_resorts.resorts.keys())})")
+        while generate_loop and not quit_generate:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in self.__saved_ski_resorts.resorts.keys():
+                    generate_loop = False
+                    ski_resort = values["-text_input-"]
                 else:
-                    amenity_name = ""
-                    while amenity_name not in self.__saved_ski_resorts.resorts[ski_resort].ski_park_names:
-                        amenity_name = input(f"Enter the name of the ski park that you want to stop at ({self.__saved_ski_resorts.resorts[ski_resort].ski_park_names}): ")
+                    sg.popup("Error. The ski resort entered does not exist.")
+                    self.__window_generate["-text_input-"].update("")
 
-                valid = None
-                while valid == None:
-                    break_time = input("At what time do you want to visit this amenity (hh:mm): ")
-                    if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
-                        if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
-                            valid = True
-                        else:
-                            print("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
+        if not quit_generate:
+            generate_loop = True
+            self.__window_generate["-text_input-"].update("")
+            self.__window_generate["-text-"].update(f"From which ski lift station do you want to start your route:\n({'\n'.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})")
+        while generate_loop and not quit_generate:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in self.__saved_ski_resorts.resorts[ski_resort].nodes.keys():
+                    generate_loop = False
+                    start = values["-text_input-"]
+                    original_start = start
+                else:
+                    sg.popup("Error. The ski lift station entered does not exist.")
+                    self.__window_generate["-text_input-"].update("")
+        
+        if not quit_generate:
+            generate_loop = True
+            self.__window_generate["-text_input-"].update("")
+            self.__window_generate["-text-"].update(f"At what time do you want to start your route (hh:mm):")
+        while generate_loop and not quit_generate:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                    generate_loop = False
+                    start_time = values["-text_input-"]
+                    route_start_time = start_time
+                    route_stop_time = self.__add_times(start_time, length)
+                else:
+                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                    self.__window_generate["-text_input-"].update("")
 
-                if break_type == "restaurant/amenity":
-                    break_length = 0
-                    allowed_time = self.__time_difference(break_time, route_stop_time)
-                    valid = False
-                    while valid == False:
-                        break_length = int(input("How long do you want to spend at this restaurant/amenity (minutes): "))
-                        if break_length > 0:
-                            if break_length <= allowed_time:
-                                valid = True
-                            else:
-                                print("Error. The break cannot extend past the desired end time of this route.")
-                elif break_type == "ski park":
-                    park_repetitions = 0
-                    while park_repetitions < 1:
-                        park_repetitions = int(input("How many times do you want to ski the ski park: "))
-                breaks = ""
-                while breaks not in ["y","n"]:
-                    breaks = input("Do you want to take another break during your skiing time? (y/n): ")
-                breaks_data.append([break_type, amenity_name, break_time, break_length, park_repetitions])
+        if not quit_generate:
+            generate_loop = True
+            self.__window_generate["-text_input-"].update("")
+            self.__window_generate["-text-"].update(f"What is the maximum difficulty of run that you want to ski on ('green', 'blue', 'red', 'black' or 'unknown'):")
+        while generate_loop and not quit_generate:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in ["green","blue","red","black","unknown"]:
+                    generate_loop = False
+                    max_difficulty = values["-text_input-"]
+                else:
+                    sg.popup("Error. The difficulty entered must be 'green', 'blue', 'red', 'black' or 'unknown'.")
+                    self.__window_generate["-text_input-"].update("")
 
+        generate_loop = True
+        breaks_data = []
+        if not quit_generate:
+            self.__window_generate["-text_input-"].update("")
+            self.__window_generate["-text-"].update(f"Do you want to take breaks during your skiing time e.g. for lunch or at ski parks? (y/n):")
+        while generate_loop and not quit_generate:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in ["y","n"]:
+                    generate_loop = False
+                    breaks = values["-text_input-"]
+                    previous_time = "00:00"
+                    while breaks == "y":
+                        generate_loop = True
+                        break_type = ""
+                        self.__window_generate["-text_input-"].update("")
+                        self.__window_generate["-text-"].update(f"What type of break do you want to take ('restaurant/amenity' or 'ski park'):")
+                        while generate_loop and not quit_generate:
+                            event, values = self.__window_generate.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                generate_loop = False
+                                quit_generate = True
+                            elif event == "-cancel-":
+                                self.__window_generate["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in ["restaurant/amenity","ski park"]:
+                                    generate_loop = False
+                                    break_type = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The break type must be 'restaurant/amenity' or 'ski park'.")
+                                    self.__window_generate["-text_input-"].update("")
+                        if break_type == "restaurant/amenity" and not quit_generate:
+                            generate_loop = True
+                            self.__window_generate["-text_input-"].update("")
+                            self.__window_generate["-text-"].update(f"Enter the name of the restaurant/amenity that you want to stop at:\n({"\n".join(self.__saved_ski_resorts.resorts[ski_resort].amenity_names)}):")
+                            while generate_loop and not quit_generate:
+                                event, values = self.__window_generate.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    generate_loop = False
+                                    quit_generate = True
+                                elif event == "-cancel-":
+                                    self.__window_generate["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in self.__saved_ski_resorts.resorts[ski_resort].amenity_names:
+                                        generate_loop = False
+                                        amenity_name = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The amenity name must be one of the following:", ", ".join(self.__saved_ski_resorts.resorts[ski_resort].amenity_names))
+                                        self.__window_generate["-text_input-"].update("")
+                        elif break_type == "ski park" and not quit_generate:
+                            generate_loop = True
+                            self.__window_generate["-text_input-"].update("")
+                            self.__window_generate["-text-"].update(f"Enter the name of the ski park that you want to stop at:\n({"\n".join(self.__saved_ski_resorts.resorts[ski_resort].ski_park_names)}):")
+                            while generate_loop and not quit_generate:
+                                event, values = self.__window_generate.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    generate_loop = False
+                                    quit_generate = True
+                                elif event == "-cancel-":
+                                    self.__window_generate["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in self.__saved_ski_resorts.resorts[ski_resort].ski_park_names:
+                                        generate_loop = False
+                                        amenity_name = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The ski park name must be one of the following:", ", ".join(self.__saved_ski_resorts.resorts[ski_resort].ski_park_names))
+                                        self.__window_generate["-text_input-"].update("")
+                        
+                        if not quit_generate:
+                            generate_loop = True
+                            self.__window_generate["-text_input-"].update("")
+                            self.__window_generate["-text-"].update(f"At what time do you want to visit this amenity (hh:mm):")
+                        while generate_loop and not quit_generate:
+                            event, values = self.__window_generate.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                generate_loop = False
+                                quit_generate = True
+                            elif event == "-cancel-":
+                                self.__window_generate["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                    break_time = values["-text_input-"]
+                                    if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
+                                        if self.__compare_greater(break_time, previous_time):
+                                            previous_time = break_time
+                                            generate_loop = False
+                                        else:
+                                            sg.popup("Error. The time that you want to visit this amenity at must be after the previous break.")
+                                            self.__window_generate["-text_input-"].update("")
+                                    else:
+                                        sg.popup("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
+                                        self.__window_generate["-text_input-"].update("")
+                                else:
+                                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                                    self.__window_generate["-text_input-"].update("")
+                        
+                        if break_type == "restaurant/amenity":
+                            park_repetitions = 0
+                            generate_loop = True
+                            self.__window_generate["-text_input-"].update("")
+                            self.__window_generate["-text-"].update(f"How long do you want to spend at this restaurant/amenity (minutes):")
+                            while generate_loop and not quit_generate:
+                                event, values = self.__window_generate.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    generate_loop = False
+                                    quit_generate = True
+                                elif event == "-cancel-":
+                                    self.__window_generate["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if int(values["-text_input-"]) > 0:
+                                        try:
+                                            break_length = int(values["-text_input-"])
+                                            allowed_time = self.__time_difference(break_time, route_stop_time)
+                                            if break_length <= allowed_time:
+                                                generate_loop = False
+                                            else:
+                                                sg.popup("Error. The break cannot extend past the desired end time of this route.")
+                                                self.__window_generate["-text_input-"].update("")
+                                        except ValueError:
+                                            sg.popup("Error. The break length must be an integer.")
+                                            self.__window_generate["-text_input-"].update("")
+                                    else:
+                                        sg.popup("Error. The break length must be greater than 0.")
+                                        self.__window_generate["-text_input-"].update("")
+                        elif break_type == "ski park":
+                            break_length = 0
+                            generate_loop = True
+                            self.__window_generate["-text_input-"].update("")
+                            self.__window_generate["-text-"].update(f"How many times do you want to ski the ski park:")
+                            while generate_loop and not quit_generate:
+                                event, values = self.__window_generate.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    generate_loop = False
+                                    quit_generate = True
+                                elif event == "-cancel-":
+                                    self.__window_generate["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if int(values["-text_input-"]) > 0:
+                                        park_repetitions = int(values["-text_input-"])
+                                        generate_loop = False
+                                    else:
+                                        sg.popup("Error. The number of times must be greater than 0.")
+                                        self.__window_generate["-text_input-"].update("")
+                        
+                        breaks = "n"
+                        if not quit_generate:
+                            generate_loop = True
+                            self.__window_generate["-text_input-"].update("")
+                            self.__window_generate["-text-"].update(f"Do you want to take another break during your skiing time? (y/n):")
+                        while generate_loop and not quit_generate:
+                            event, values = self.__window_generate.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                generate_loop = False
+                                quit_generate = True
+                            elif event == "-cancel-":
+                                self.__window_generate["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in ["y","n"]:
+                                    generate_loop = False
+                                    breaks = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The input must be 'y' or 'n'.")
+                                    self.__window_generate["-text_input-"].update("")
+                        if not quit_generate:
+                            breaks_data.append([break_type, amenity_name, break_time, break_length, park_repetitions])
+                else:
+                    sg.popup("Error. The input must be 'y' or 'n'.")
+                    self.__window_generate["-text_input-"].update("")
+        
         advanced_options = ""
-        while advanced_options not in ["y","n"]:
-            advanced_options = input("Do you want to enter further advanced options? (y/n): ")
-        if advanced_options == "y":
-            as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude = self.__advanced_options()
+        if not quit_generate:
+            generate_loop = True
+            self.__window_generate["-text_input-"].update("")
+            self.__window_generate["-text-"].update(f"Do you want to enter further advanced options? (y/n):")
+        while generate_loop and not quit_generate:
+            event, values = self.__window_generate.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                generate_loop = False
+                quit_generate = True
+            elif event == "-cancel-":
+                self.__window_generate["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] in ["y","n"]:
+                    generate_loop = False
+                    advanced_options = values["-text_input-"]
+                else:
+                    sg.popup("Error. The input must be 'y' or 'n'.")
+                    self.__window_generate["-text_input-"].update("")
+        
+        self.__window_generate.close()
+
+        if advanced_options == "y" and not quit_generate:
+            as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude, quit_generate = self.__advanced_options()
         else:
             weather = "unknown"
             as_close_to_time = False
@@ -343,56 +684,84 @@ class Gui(Ui):
             latitude = "N/A"
             longitude = "N/A"
 
-        route = [{"start":start,"time_elapsed":0,"pause":False,"lift":None,"break":False}]
-        time_elapsed = 0
-        for plan_num in range(len(breaks_data)+1):
-            if len(breaks_data) > 0:
-                if plan_num > 0:
-                    start_time = self.__add_times(route_start_time, time_elapsed)
-                if plan_num < len(breaks_data):
-                    end_time = breaks_data[plan_num][2]
-                    length = self.__time_difference(route_start_time,end_time)
-                    end_node = breaks_data[plan_num][1]
+        if not quit_generate:
+            route = [{"start":start,"time_elapsed":0,"pause":False,"lift":None,"break":False}]
+            time_elapsed = 0
+            for plan_num in range(len(breaks_data)+1):
+                if len(breaks_data) > 0:
+                    if plan_num > 0:
+                        start_time = self.__add_times(route_start_time, time_elapsed)
+                    if plan_num < len(breaks_data):
+                        end_time = breaks_data[plan_num][2]
+                        length = self.__time_difference(route_start_time,end_time)
+                        end_node = breaks_data[plan_num][1]
+                    else:
+                        length = self.__time_difference(route_start_time,route_stop_time)
+                        end_node = original_start
+                    route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], end_node, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
+                    route, returned_to_start, new_length = route_planning.get_route(as_close_to_time, route, start, time_elapsed)
+
+                    if not returned_to_start:
+                        break
+                    if new_length > length:
+                        for break_num in range(len(breaks_data)):
+                            breaks_data[break_num][2] = self.__add_times(breaks_data[break_num][2], new_length-length)
+                        end_time = self.__add_times(end_time, new_length-length)
+                        length = new_length
+                    if plan_num < len(breaks_data):
+                        time_elapsed = route[-1]["time_elapsed"]
+                        if breaks_data[plan_num][0] == "restaurant/amenity":
+                            wait_length = breaks_data[plan_num][3]
+                            route.append({"start":route[-1]["start"],"time_elapsed":time_elapsed+wait_length,"pause":False,"lift":None,"break":True})
+                        elif breaks_data[plan_num][0] == "ski park":
+                            ski_park_length = breaks_data[plan_num][4]*self.__saved_ski_resorts.resorts[ski_resort].nodes[breaks_data[plan_num][1]].length
+                            route.append({"start":route[-1]["start"],"time_elapsed":time_elapsed+ski_park_length,"pause":False,"lift":None,"break":True})
+                    if plan_num < len(breaks_data):
+                        start = breaks_data[plan_num][1]
+                        time_elapsed = route[-1]["time_elapsed"]
                 else:
-                    length = self.__time_difference(route_start_time,route_stop_time)
-                    end_node = original_start
-                route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], end_node, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
-                route, returned_to_start = route_planning.get_route(as_close_to_time, route, start, time_elapsed)
+                    route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
+                    route, returned_to_start, length = route_planning.get_route(as_close_to_time, route, start, time_elapsed) #Returns a list of dictionaries containing the node moved to and the time elapsed
+            
+            route_output = []
+            for i in range(len(route)-1):
+                if route[i+1]["pause"] == True:
+                    if i != 0:
+                        route_output.append(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                    else:
+                        route_output.append(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open (route length increased by {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                elif route[i+1]["break"] == True:
+                    route_output.append(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({self.__saved_ski_resorts.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                else: #add lift/run from x to y
+                    route_output.append(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(route_start_time,route[i+1]['time_elapsed'])}")
 
-                if not returned_to_start:
-                    break
-                if plan_num < len(breaks_data):
-                    time_elapsed = route[-1]["time_elapsed"]
-                    if breaks_data[plan_num][0] == "restaurant/amenity":
-                        wait_length = breaks_data[plan_num][3]
-                        route.append({"start":route[-1]["start"],"time_elapsed":time_elapsed+wait_length,"pause":False,"lift":None,"break":True})
-                    elif breaks_data[plan_num][0] == "ski park":
-                        ski_park_length = breaks_data[plan_num][4]*self.__saved_ski_resorts.resorts[ski_resort].nodes[breaks_data[plan_num][1]].length
-                        route.append({"start":route[-1]["start"],"time_elapsed":time_elapsed+ski_park_length,"pause":False,"lift":None,"break":True})
-                if plan_num < len(breaks_data):
-                    start = breaks_data[plan_num][1]
-                    time_elapsed = route[-1]["time_elapsed"]
-            else:
-                route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
-                route, returned_to_start = route_planning.get_route(as_close_to_time, route, start, time_elapsed) #Returns a list of dictionaries containing the node moved to and the time elapsed
-        print(route)
-        for i in range(len(route)-1):
-            if route[i+1]["pause"] == True:
-                print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
-            elif route[i+1]["break"] == True:
-                print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({self.__saved_ski_resorts.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
-            else: #add lift/run from x to y
-                print(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(route_start_time,route[i+1]['time_elapsed'])}")
-
-        if not returned_to_start:
-            print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
-
-        save = input("Do you want to save this route? (y/n): ")
-        if save == "y":
-            previous_route_names = get_route_names()
-            while route_name in previous_route_names or not(re.match('(^[a-z]|[A-Z]).*$',route_name)):
-                route_name = input("Enter the name of the route: ")
-            save_route(route_name, route, route_start_time, returned_to_start, ski_resort, self.__saved_ski_resorts)
+            if not returned_to_start:
+                route_output.append(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
+            
+            route_ouput_layout = [
+                [sg.Text(f"Instructions:\n{'\n'.join(route_output)}")],
+                [sg.Text("Enter the name of the route before saving:")],
+                [sg.InputText(key="-route_name-")],
+                [sg.Button("Save route", key="-Save-")],
+                [sg.Button("Return to main menu", key="-Return-")]
+            ]
+            self.__window_route_output = sg.Window("Route", route_ouput_layout)
+            generate_loop = True
+            while generate_loop:
+                event, values = self.__window_route_output.read()
+                if event == "-Return-" or event == sg.WIN_CLOSED:
+                    generate_loop = False
+                    quit_generate = True
+                elif event == "-Save-":
+                    previous_route_names = get_route_names()
+                    if values["-route_name-"] not in previous_route_names and re.match('(^[a-z]|[A-Z]).*$',values["-route_name-"]):
+                        generate_loop = False
+                        route_name = values["-route_name-"]
+                        save_route(route_name, route, route_start_time, returned_to_start, ski_resort, self.__saved_ski_resorts)
+                    else:
+                        sg.popup("Error. The route name must start with a letter and not already exist.")
+                        self.__window_route_output["-route_name-"].update("")
+            self.__window_route_output.close()
 
     ################################################################################################
     # GROUP A Skill: Dynamic generation of objects based on complex user-defined use of an OOP model
@@ -401,115 +770,563 @@ class Gui(Ui):
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
         self.__construct_example_ski_resort()
-        ski_resort_name = ""
-        while ski_resort_name in self.__saved_ski_resorts.resorts or not(re.match('(^[a-z]|[A-Z]).*$',ski_resort_name)):
-            ski_resort_name = input("Enter the name of the ski resort which you want to create: ")
-        self.__saved_ski_resorts.add_resort(ski_resort_name)
 
-        creating = True
-        while creating: #Allow any number of ski lift stations to be created
-            create_node = input("Do you want to create a new ski lift station? (y/n): ") #Validation
-            if create_node == "y":
-                node_name = ""
-                while node_name in self.__saved_ski_resorts.resorts[ski_resort_name].nodes or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
+        create_layout = [
+            [sg.Text(f"Enter the name of the ski resort which you want to create (It cannot be the same as one of the previously created resorts shown):\n({"\n".join(self.__saved_ski_resorts.resorts)})", key = "-text-")],
+            [sg.InputText(key="-text_input-")],
+            [sg.Button("Submit", key="-submit-")],
+            [sg.Button("Cancel", key="-cancel-")],
+            [sg.Button("Return to menu", key="-return-")]
+        ]
+        self.__window_create = sg.Window("Creating ski resort", create_layout)
+
+        creating_loop = True
+        quit_creating = False
+        while creating_loop and not quit_creating:
+            event, values = self.__window_create.read()
+            if event == "-return-" or event == sg.WIN_CLOSED:
+                creating_loop = False
+                quit_creating = True
+            elif event == "-cancel-":
+                self.__window_create["-text_input-"].update("")
+            elif event == "-submit-":
+                if values["-text_input-"] not in self.__saved_ski_resorts.resorts and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                    creating_loop = False
+                    ski_resort_name = values["-text_input-"]
+                    self.__saved_ski_resorts.add_resort(ski_resort_name)
+                else:
+                    sg.popup("Error. The ski resort name must start with a letter and not already exist.")
+                    self.__window_create["-text_input-"].update("")
+
+        if not quit_creating:
+            creating = True
+            while creating:
+                create_node = ""
+                creating = False
+                if not quit_creating:
+                    creating_loop = True
+                    self.__window_create["-text_input-"].update("")
+                    self.__window_create["-text-"].update(f"Do you want to create a new ski lift station? (y/n):")
+                while creating_loop and not quit_creating:
+                    event, values = self.__window_create.read()
+                    if event == "-return-" or event == sg.WIN_CLOSED:
+                        creating_loop = False
+                        quit_creating = True
+                    elif event == "-cancel-":
+                        self.__window_create["-text_input-"].update("")
+                    elif event == "-submit-":
+                        if values["-text_input-"] in ["y","n"]:
+                            creating_loop = False
+                            create_node = values["-text_input-"]
+                        else:
+                            sg.popup("Error. The input must be 'y' or 'n'.")
+                            self.__window_create["-text_input-"].update("")
+                
+                if create_node == "y" and not quit_creating:
+                    creating = True
+                    creating_loop = True
+                    self.__window_create["-text_input-"].update("")
                     if len(self.__saved_ski_resorts.resorts[ski_resort_name].nodes) == 0:
-                        node_name = input(f"Enter the name of the ski lift station: (No previously created stations)\n")
+                        self.__window_create["-text-"].update(f"Enter the name of the new ski lift station: (No previously created stations)")
                     else:
-                        node_name = input(f"Enter the name of the ski lift station: (Previously created ski lift stations: {', '.join(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})\n")
-                node_type = ""
-                while node_type not in ["s","p","a"]:
-                    node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
-                altitude = input("Enter the altitude of the ski lift station: ") #Validation
-                if node_type == "p":
-                    ski_park_length = 0
-                    while ski_park_length < 1:
-                        ski_park_length = int(input("Enter the length of the ski park (minutes): "))
-                    self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_park(node_name,altitude,ski_park_length)
-                elif node_type == "a":
-                    amenity_type = ""
-                    amenity_type = input("Enter a description of the type of amenity e.g. restaurant: ")
-                    self.__saved_ski_resorts.resorts[ski_resort_name].add_amenity(node_name,altitude,amenity_type)
-                elif node_type == "s":
-                    self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(node_name,altitude)
-                creating_run = "y"
-                while creating_run == "y": #Allow at least one run to be created from each ski lift station
-                    run_name = ""
-                    while run_name in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
+                        self.__window_create["-text-"].update(f"Enter the name of the new ski lift station:\n({'\n'.join(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())})")
+                    while creating_loop and not quit_creating:
+                        event, values = self.__window_create.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            creating_loop = False
+                            quit_creating = True
+                        elif event == "-cancel-":
+                            self.__window_create["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                creating_loop = False
+                                node_name = values["-text_input-"]
+                            else:
+                                sg.popup("Error. The ski lift station name must start with a letter and not already exist.")
+                                self.__window_create["-text_input-"].update("")
+                    
+                    node_type = ""
+                    if not quit_creating:
+                        creating_loop = True
+                        self.__window_create["-text_input-"].update("")
+                        self.__window_create["-text-"].update(f"Do you want to create a ski lift station, a ski park or an amenity ('s', 'p' or 'a'):")
+                    while creating_loop and not quit_creating:
+                        event, values = self.__window_create.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            creating_loop = False
+                            quit_creating = True
+                        elif event == "-cancel-":
+                            self.__window_create["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"] in ["s","p","a"]:
+                                creating_loop = False
+                                node_type = values["-text_input-"]
+                            else:
+                                sg.popup("Error. The input must be 's', 'p' or 'a'.")
+                                self.__window_create["-text_input-"].update("")
+                    
+                    if not quit_creating:
+                        creating_loop = True
+                        self.__window_create["-text_input-"].update("")
+                        self.__window_create["-text-"].update(f"Enter the altitude of the ski lift station:")
+                    while creating_loop and not quit_creating:
+                        event, values = self.__window_create.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            creating_loop = False
+                            quit_creating = True
+                        elif event == "-cancel-":
+                            self.__window_create["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"].isnumeric():
+                                creating_loop = False
+                                altitude = int(values["-text_input-"])
+                            else:
+                                sg.popup("Error. The altitude must be a number.")
+                                self.__window_create["-text_input-"].update("")
+                    
+                    if node_type == "p":
+                        creating_loop = True
+                        self.__window_create["-text_input-"].update("")
+                        self.__window_create["-text-"].update(f"Enter the length of the ski park (minutes):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"].isnumeric():
+                                    if int(values["-text_input-"]) > 0:
+                                        creating_loop = False
+                                        ski_park_length = int(values["-text_input-"])
+                                    else:
+                                        sg.popup("Error. The ski park length must be greater than 0.")
+                                        self.__window_create["-text_input-"].update("")
+                                else:
+                                    sg.popup("Error. The ski park length must be a number.")
+                                    self.__window_create["-text_input-"].update("")
+                        self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_park(node_name,altitude,ski_park_length)
+
+                    elif node_type == "a":
+                        creating_loop = True
+                        self.__window_create["-text_input-"].update("")
+                        self.__window_create["-text-"].update(f"Enter a description of the type of amenity e.g. restaurant:")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                    creating_loop = False
+                                    amenity_type = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The amenity type must start with a letter.")
+                                    self.__window_create["-text_input-"].update("")
+                        self.__saved_ski_resorts.resorts[ski_resort_name].add_amenity(node_name,altitude,amenity_type)
+                    
+                    elif node_type == "s":
+                        self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(node_name,altitude)
+                    
+                    creating_run = "y"
+                    while creating_run == "y" and not quit_creating: #Allow at least one run to be created from each ski lift station
+                        creating_loop = True
+                        self.__window_create["-text_input-"].update("")
                         run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
                         run_names_excluding_node.remove(node_name)
                         if len(run_names_excluding_node) == 0:
-                            run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")   
+                            self.__window_create["-text-"].update(f"Enter an end ski lift station of this run: (No previously created ski lift stations)")
                         else:
-                            run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
-                    length = input("Enter the length of the run (minutes): ") #Validation
-                    opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                    closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
-                    lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
-                    if lift == "l":
-                        lift = 1
-                        lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
-                        difficulty = "none"
-                    elif lift == "r":
-                        lift = 0
-                        lift_type = "none"
-                        difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
-                    self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
-                    creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
-            elif create_node == "n":
-                creating = False
-        
-        #Check if any ski lift stations have been used as the end of a run but have not been created
+                            self.__window_create["-text-"].update(f"Enter an end ski lift station of this run:\n({'\n'.join(run_names_excluding_node)})")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                    creating_loop = False
+                                    run_name = values["-text_input-"]
+                                else:
+                                    sg.popup("Error.  The name entered cannot already be a run or be the same as the node name. It must also start with a letter.")
+                                    self.__window_create["-text_input-"].update("")
+                        
+                        if not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter the length of the run (minutes):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"].isnumeric():
+                                    creating_loop = False
+                                    length = int(values["-text_input-"])
+                                else:
+                                    sg.popup("Error. The length must be a number.")
+                                    self.__window_create["-text_input-"].update("")
+                        
+                        if not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter the opening time of the run (hh:mm):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                    creating_loop = False
+                                    opening = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                                    self.__window_create["-text_input-"].update("")
+                        
+                        if not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter the closing time of the run (hh:mm):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                    if self.__compare_greater(values["-text_input-"], opening):
+                                        creating_loop = False
+                                        closing = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The closing time must be after the opening time.")
+                                        self.__window_create["-text_input-"].update("")
+                                else:
+                                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                                    self.__window_create["-text_input-"].update("")
+                        
+                        lift = ""
+                        if not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Is this a lift or a run ('l' or 'r'):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in ["l","r"]:
+                                    creating_loop = False
+                                    lift = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The input must be 'l' or 'r'.")
+                                    self.__window_create["-text_input-"].update("")
+                        
+                        if lift == "l":
+                            lift = 1
+                            difficulty = "none"
+
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter the type of lift ('gondola', 'chairlift', 'draglift'):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["gondola","chairlift","draglift"]:
+                                        creating_loop = False
+                                        lift_type = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The input must be 'gondola', 'chairlift' or 'draglift'.")
+                                        self.__window_create["-text_input-"].update("")
+                        
+                        elif lift == "r":
+                            lift = 0
+                            lift_type = "none"
+
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter the difficulty of the run ('green', 'blue', 'red', 'black'):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["green","blue","red","black"]:
+                                        creating_loop = False
+                                        difficulty = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The input must be 'green', 'blue', 'red' or 'black'.")
+                                        self.__window_create["-text_input-"].update("")
+                        
+                        if not quit_creating:
+                            self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
+
+                        if not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Do you want to create another run from this ski lift station? (y/n):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in ["y","n"]:
+                                    creating_run = values["-text_input-"]
+                                    creating_loop = False
+                                else:
+                                    sg.popup("Error. The input must be 'y' or 'n'.")
+                                    self.__window_create["-text_input-"].update("")
+
+                elif create_node == "n" and not quit_creating:
+                    creating = False
+
         incomplete_nodes = True
         break_loop = False
-        while incomplete_nodes:
+        while incomplete_nodes and not quit_creating:
             for node in self.__saved_ski_resorts.resorts[ski_resort_name].nodes: #node is a string of the name of the ski lift station
                 for run in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs: #run is the run object
                     if run.name not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes:
-                        print(f"Node {run.name} must be created since it was used as the end of a run but has not been created.")
-                        altitude = input("Enter the altitude of the ski lift station: ") #Validation
-                        self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
-                        creating_run = "y"
-                        while creating_run == "y":
-                            run_name = ""
-                            while run_name in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
-                                run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
-                                run_names_excluding_node.remove(node)
-                                if len(run_names_excluding_node) == 0:
-                                    run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")
+                        creating_loop = True
+                        self.__window_create["-text_input-"].update("")
+                        self.__window_create["-text-"].update(f"Node {run.name} must be created since it was used as the end of a run but has not been created.\nEnter the altitude of the ski lift station:")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"].isnumeric():
+                                    creating_loop = False
+                                    altitude = int(values["-text_input-"])
                                 else:
-                                    run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
-                            length = input("Enter the length of the run (minutes): ") #Validation
-                            opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                            closing = input("Enter the closing time of the run (hh:mm): ") #Validation
-                            lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                                    sg.popup("Error. The altitude must be a number.")
+                                    self.__window_create["-text_input-"].update("")
+                        self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
+
+                        creating_run = "y"
+                        while creating_run == "y" and not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
+                            run_names_excluding_node.remove(node_name)
+                            if len(run_names_excluding_node) == 0:
+                                self.__window_create["-text-"].update(f"Enter an end ski lift station of this run: (No previously created ski lift stations)")
+                            else:
+                                self.__window_create["-text-"].update(f"Enter an end ski lift station of this run:\n({'\n'.join(run_names_excluding_node)})")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                        creating_loop = False
+                                        run_name = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The name entered cannot already be a run or be the same as the node name. It must also start with a letter.")
+                                        self.__window_create["-text_input-"].update("")
+
+                            if not quit_creating:
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Enter the length of the run (minutes):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"].isnumeric():
+                                        creating_loop = False
+                                        length = int(values["-text_input-"])
+                                    else:
+                                        sg.popup("Error. The length must be a number.")
+                                        self.__window_create["-text_input-"].update("")
+                            
+                            if not quit_creating:
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Enter the opening time of the run (hh:mm):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        creating_loop = False
+                                        opening = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                                        self.__window_create["-text_input-"].update("")
+                            
+                            if not quit_creating:
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Enter the closing time of the run (hh:mm):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        if self.__compare_greater(values["-text_input-"], opening):
+                                            creating_loop = False
+                                            closing = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The closing time must be after the opening time.")
+                                            self.__window_create["-text_input-"].update("")
+                                    else:
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                                        self.__window_create["-text_input-"].update("")
+                            
+                            lift = ""
+                            if not quit_creating:
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Is this a lift or a run ('l' or 'r'):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["l","r"]:
+                                        creating_loop = False
+                                        lift = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The input must be 'l' or 'r'.")
+                                        self.__window_create["-text_input-"].update("")
+                            
                             if lift == "l":
                                 lift = 1
+                                difficulty = "none"
+
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Enter the type of lift ('gondola', 'chairlift', 'draglift'):")
+                                while creating_loop and not quit_creating:
+                                    event, values = self.__window_create.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        creating_loop = False
+                                        quit_creating = True
+                                    elif event == "-cancel-":
+                                        self.__window_create["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["gondola","chairlift","draglift"]:
+                                            creating_loop = False
+                                            lift_type = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be 'gondola', 'chairlift' or 'draglift'.")
+                                            self.__window_create["-text_input-"].update("")
+                            
                             elif lift == "r":
                                 lift = 0
-                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
-                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
-                            self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
-                            creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
+                                lift_type = "none"
+
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Enter the difficulty of the run ('green', 'blue', 'red', 'black'):")
+                                while creating_loop and not quit_creating:
+                                    event, values = self.__window_create.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        creating_loop = False
+                                        quit_creating = True
+                                    elif event == "-cancel-":
+                                        self.__window_create["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["green","blue","red","black"]:
+                                            creating_loop = False
+                                            difficulty = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be 'green', 'blue', 'red' or 'black'.")
+                                            self.__window_create["-text_input-"].update("")
+                            
+                            if not quit_creating:
+                                self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
+
+                                creating_loop = True
+                                self.__window_create["-text_input-"].update("")
+                                self.__window_create["-text-"].update(f"Do you want to create another run from this ski lift station? (y/n):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["y","n"]:
+                                        creating_run = values["-text_input-"]
+                                        creating_loop = False
+                                    else:
+                                        sg.popup("Error. The input must be 'y' or 'n'.")
+                                        self.__window_create["-text_input-"].update("")
                         break_loop = True #The loop will break if a new ski lift station is created since the dictionary being iterated over has changed
                     if break_loop:
                         break
                 if break_loop:
                     break
-            
-            incomplete_nodes = False
-            for node in self.__saved_ski_resorts.resorts[ski_resort_name].nodes: #Checks if there are any more ski lift stations that have not been created left
-                for run in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs:
-                    if run.name not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes:
-                        incomplete_nodes = True
-        if self.__saved_ski_resorts.resorts[ski_resort_name].nodes == {}:
-            print("There are no ski lift stations in this ski resort so it has not been created.")
-        add_resort_to_database(self.__saved_ski_resorts, ski_resort_name) #Add the ski resorts created in the program to the database
-        Display_graph().display_ski_resort(self.__saved_ski_resorts.resorts[ski_resort_name]) #display ski resort
+            if not quit_creating:
+                incomplete_nodes = False
+                for node in self.__saved_ski_resorts.resorts[ski_resort_name].nodes: #Checks if there are any more ski lift stations that have not been created left
+                    for run in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs:
+                        if run.name not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes:
+                            incomplete_nodes = True
+        if not quit_creating:     
+            if self.__saved_ski_resorts.resorts[ski_resort_name].nodes == {}:
+                sg.popup("There are no ski lift stations in this ski resort so it has not been created.")
+            self.__window_create.close()
+            add_resort_to_database(self.__saved_ski_resorts, ski_resort_name) #Add the ski resorts created in the program to the database
+            Display_graph().display_ski_resort(self.__saved_ski_resorts.resorts[ski_resort_name]) #display ski resort
 
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
     def __modify_ski_resort(self): #Allows the user to modify an existing run, add a new run or lift or add a new node
+        self.__saved_ski_resorts = Ski_resorts()
+        self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts)
+        self.__construct_example_ski_resort()
+
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
@@ -520,16 +1337,54 @@ class Gui(Ui):
                 for item in ski_resorts_list_unpacked:
                     ski_resorts_list.append(item[0])
                 ski_resorts_list = set(ski_resorts_list)
-                ski_resort_to_modify = ""
-                while ski_resort_to_modify not in ski_resorts_list:
-                    ski_resort_to_modify = input(f"Enter the name of the ski resort you want to modify: ({", ".join(ski_resorts_list)})\n")
 
-                #Choice of modification
+                modify_layout = [
+                    [sg.Text(f"Enter the name of the ski resort which you want to modify (It cannot be the same as one of the previously created resorts shown):\n({"\n".join(ski_resorts_list)})", key = "-text-")],
+                    [sg.InputText(key="-text_input-")],
+                    [sg.Button("Submit", key="-submit-")],
+                    [sg.Button("Cancel", key="-cancel-")],
+                    [sg.Button("Return to menu", key="-return-")]
+                ]
+                self.__window_modify = sg.Window("Modifying ski resort", modify_layout)
+
+                modify_loop = True
+                quit_modifying = False
+                while modify_loop and not quit_modifying:
+                    event, values = self.__window_modify.read()
+                    if event == "-return-" or event == sg.WIN_CLOSED:
+                        modify_loop = False
+                        quit_modifying = True
+                    elif event == "-cancel-":
+                        self.__window_modify["-text_input-"].update("")
+                    elif event == "-submit-":
+                        if values["-text_input-"] in ski_resorts_list:
+                            modify_loop = False
+                            ski_resort_to_modify = values["-text_input-"]
+                        else:
+                            sg.popup("Error. The ski resort name must be one of the previously created ski resorts shown.")
+                            self.__window_modify["-text_input-"].update("")
+
                 modify = ""
-                while modify not in ["1","2","3"]:
-                    modify = input("What do you want to modify?\n1. Add a new ski lift station\n2. Add a new run or lift\n3. Modify an existing run\n")
+                if not quit_modifying:
+                    modify_loop = True
+                    self.__window_modify["-text_input-"].update("")
+                    self.__window_modify["-text-"].update(f"What do you want to modify?\n1. Add a new ski lift station\n2. Add a new run or lift\n3. Modify an existing run\n")
+                while modify_loop and not quit_modifying:
+                    event, values = self.__window_modify.read()
+                    if event == "-return-" or event == sg.WIN_CLOSED:
+                        modify_loop = False
+                        quit_modifying = True
+                    elif event == "-cancel-":
+                        self.__window_modify["-text_input-"].update("")
+                    elif event == "-submit-":
+                        if values["-text_input-"] in ["1","2","3"]:
+                            modify_loop = False
+                            modify = values["-text_input-"]
+                        else:
+                            sg.popup("Error. The input must be '1', '2' or '3'.")
+                            self.__window_modify["-text_input-"].update("")
                 
-                if modify == "1": #add a new ski lift station
+                if modify == "1" and not quit_modifying: #add a new ski lift station
                     select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
                     cursor.execute(select_nodes, [ski_resort_to_modify])
                     node_names_unpacked = cursor.fetchall()
@@ -537,34 +1392,119 @@ class Gui(Ui):
                     for item in node_names_unpacked:
                         node_names.append(item[0])
                     node_name = ""
-                    while node_name in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
+
+                    if not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
                         if len(node_names) == 0:
-                            node_name = input(f"Enter the name of the ski lift station that you want to create: (No previously created stations)\n")
+                            self.__window_modify["-text-"].update(f"Enter the name of the ski lift station that you want to create: (No previously created stations)")
                         else:
-                            node_name = input(f"Enter the name of the ski lift station that you want to create: (Previously created ski lift stations: {', '.join(node_names)})\n")
+                            self.__window_modify["-text-"].update(f"Enter the name of the ski lift station that you want to create:\n({", ".join(node_names)})")
+                    while modify_loop and not quit_modifying:
+                        event, values = self.__window_modify.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            modify_loop = False
+                            quit_modifying = True
+                        elif event == "-cancel-":
+                            self.__window_modify["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"] not in node_names and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                modify_loop = False
+                                node_name = values["-text_input-"]
+                            else:
+                                sg.popup("Error. The ski lift station name must start with a letter and not already exist.")
+                                self.__window_modify["-text_input-"].update("")
+
                     node_type = ""
-                    while node_type not in ["s","p","a"]:
-                        node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
-                    altitude = input("Enter the altitude of the ski lift station: ") #Validation
-                    if node_type == "p":
-                        ski_park_length = 0
-                        while ski_park_length < 1:
-                            ski_park_length = int(input("Enter the length of the ski park (minutes): "))
-                        add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
-                                    VALUES (?,?,?,?,?,?);"""
-                        cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Ski park", ski_park_length, "None"])
-                    elif node_type == "a":
-                        amenity_type = ""
-                        amenity_type = input("Enter a description of the type of amenity e.g. restaurant: ")
-                        add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
-                                    VALUES (?,?,?,?,?,?);"""
-                        cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Amenity", 0, amenity_type])
-                    elif node_type == "s":
+                    if not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
+                        self.__window_modify["-text-"].update(f"Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'):")
+                    while modify_loop and not quit_modifying:
+                        event, values = self.__window_modify.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            modify_loop = False
+                            quit_modifying = True
+                        elif event == "-cancel-":
+                            self.__window_modify["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"] in ["s","p","a"]:
+                                modify_loop = False
+                                node_type = values["-text_input-"]
+                            else:
+                                sg.popup("Error. The input must be 's', 'p' or 'a'.")
+                                self.__window_modify["-text_input-"].update("")
+
+                    if not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
+                        self.__window_modify["-text-"].update(f"Enter the altitude of the ski lift station:")
+                    while modify_loop and not quit_modifying:
+                        event, values = self.__window_modify.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            modify_loop = False
+                            quit_modifying = True
+                        elif event == "-cancel-":
+                            self.__window_modify["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"].isnumeric():
+                                modify_loop = False
+                                altitude = int(values["-text_input-"])
+                            else:
+                                sg.popup("Error. The altitude must be a number.")
+                                self.__window_modify["-text_input-"].update("")
+
+                    if node_type == "p" and not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
+                        self.__window_modify["-text-"].update(f"Enter the length of the ski park (minutes):")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"].isnumeric():
+                                    modify_loop = False
+                                    ski_park_length = int(values["-text_input-"])
+                                else:
+                                    sg.popup("Error. The ski park length must be a number.")
+                                    self.__window_modify["-text_input-"].update("")
+                        if not quit_modifying:
+                            add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
+                                        VALUES (?,?,?,?,?,?);"""
+                            cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Ski park", ski_park_length, "None"])
+                    elif node_type == "a" and not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
+                        self.__window_modify["-text-"].update(f"Enter a description of the type of amenity e.g. restaurant:")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                    modify_loop = False
+                                    amenity_type = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The amenity type must start with a letter.")
+                                    self.__window_modify["-text_input-"].update("")
+                        if not quit_modifying:
+                            add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
+                                        VALUES (?,?,?,?,?,?);"""
+                            cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Amenity", 0, amenity_type])
+                    elif node_type == "s" and not quit_modifying:
                         add_node = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
                                     VALUES (?,?,?,?,?,?);"""
                         cursor.execute(add_node, [node_name, ski_resort_to_modify, altitude, "Ski lift station", 0, "None"])
+
                     creating_run = "y"
-                    while creating_run == "y": #Allow at least one run to be created from each ski lift station
+                    while creating_run == "y" and not quit_modifying: #Allow at least one run to be created from each ski lift station
                         select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
                         cursor.execute(select_runs, [node_name, ski_resort_to_modify])
                         runs_unpacked = cursor.fetchall()
@@ -576,80 +1516,180 @@ class Gui(Ui):
                             run_names.append(end_node_name)
                         run_name = ""
                         if len(node_names) == 0:
-                            print("There is only one ski lift station in this ski resort so no runs can be created.")
+                            sg.popup("There is only one ski lift station in this ski resort so no runs can be created.")
                             break
                         if run_names == node_names:
-                            print("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
+                            sg.popup("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
                             break
-                        while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
-                            run_name = input(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at: ({', '.join(node_names)})\nSki lift stations to which there is already a run: ({', '.join(run_names)})\n")
-                        length = input("Enter the length of the run (minutes): ") #Validation
-                        opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                        closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
-                        lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
-                        if lift == "l":
+                        
+                        if not quit_modifying:
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at:\n({"\n".join(node_names)})\nSki lift stations to which there is already a run:\n({"\n".join(run_names)})")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in node_names and values["-text_input-"] not in run_names and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                    modify_loop = False
+                                    run_name = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The name entered must not already be a run, be the same as the node name and start with a letter.")
+                                    self.__window_modify["-text_input-"].update("")
+
+                        if not quit_modifying:
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the length of the run (minutes):")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"].isnumeric():
+                                    modify_loop = False
+                                    length = int(values["-text_input-"])
+                                else:
+                                    sg.popup("Error. The length must be a number.")
+                                    self.__window_modify["-text_input-"].update("")
+
+                        if not quit_modifying:
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the opening time of the run (hh:mm):")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                    modify_loop = False
+                                    opening = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                                    self.__window_modify["-text_input-"].update("")
+
+                        if not quit_modifying:
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the closing time of the run (hh:mm):")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                    if self.__compare_greater(values["-text_input-"], opening):
+                                        modify_loop = False
+                                        closing = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The closing time must be after the opening time.")
+                                        self.__window_modify["-text_input-"].update("")
+                                else:
+                                    sg.popup("Error. The time entered must be in the format hh:mm.")
+                                    self.__window_modify["-text_input-"].update("")
+
+                        lift = ""
+                        if not quit_modifying:
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Is this a lift or a run ('l' or 'r'):")
+                        while modify_loop and not quit_modifying:
+                            event, values = self.__window_modify.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                modify_loop = False
+                                quit_modifying = True
+                            elif event == "-cancel-":
+                                self.__window_modify["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in ["l","r"]:
+                                    modify_loop = False
+                                    lift = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The input must be 'l' or 'r'.")
+                                    self.__window_modify["-text_input-"].update("")
+
+                        if lift == "l" and not quit_modifying:
                             lift = 1
-                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the type of lift ('gondola', 'chairlift', 'draglift'):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["gondola","chairlift","draglift"]:
+                                        modify_loop = False
+                                        lift_type = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The input must be 'gondola', 'chairlift' or 'draglift'.")
+                                        self.__window_modify["-text_input-"].update("")
                             difficulty = "none"
-                        elif lift == "r":
+                        elif lift == "r" and not quit_modifying:
                             lift = 0
                             lift_type = "none"
-                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
-                        add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
-                                    VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
-                        cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
-                        creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
-                
-                elif modify == "2": #add a new run or lift
-                    discontinue = False
-                    select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
-                    cursor.execute(select_nodes, [ski_resort_to_modify])
-                    node_names_unpacked = cursor.fetchall()
-                    node_names =[]
-                    for item in node_names_unpacked:
-                        node_names.append(item[0])
-                    node_name = ""
-                    while node_name not in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
-                        if len(node_names) == 0:
-                            print(f"There are no nodes to which a run or lift can be added.\n")
-                            discontinue = True
-                        else:
-                            node_name = input(f"Enter the name of the ski lift station from which you want to add a run or lift: (Previously created ski lift stations: {', '.join(node_names)})\n")
-                    if not discontinue:
-                        select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
-                        cursor.execute(select_runs, [node_name, ski_resort_to_modify])
-                        runs_unpacked = cursor.fetchall()
-                        run_names = []
-                        for i in range(len(runs_unpacked)):
-                            select_end_node_name = "SELECT node_name FROM nodes WHERE node_id=?;"
-                            cursor.execute(select_end_node_name, [runs_unpacked[i][2]])
-                            end_node_name = cursor.fetchone()[0]
-                            run_names.append(end_node_name)
-                        run_name = ""
-                        if len(node_names) == 0:
-                            print("There is only one ski lift station in this ski resort so no runs can be created.")
-                        elif run_names == node_names:
-                            print("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
-                        else:
-                            while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
-                                run_name = input(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at: ({', '.join(node_names)})\nSki lift stations to which there is already a run: ({', '.join(run_names)})\n")
-                            length = input("Enter the length of the run (minutes): ") #Validation
-                            opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                            closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
-                            lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
-                            if lift == "l":
-                                lift = 1
-                                lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
-                                difficulty = "none"
-                            elif lift == "r":
-                                lift = 0
-                                lift_type = "none"
-                                difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
+
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the difficulty of the run ('green', 'blue', 'red', 'black'):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["green","blue","red","black"]:
+                                        modify_loop = False
+                                        difficulty = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The input must be 'green', 'blue', 'red' or 'black'.")
+                                        self.__window_modify["-text_input-"].update("")
+
+                        creating_run = "n"
+                        if not quit_modifying:
                             add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
                                         VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
                             cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
 
-                elif modify == "3": #modify an existing run
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Do you want to create another run from this ski lift station? (y/n):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["y","n"]:
+                                        creating_run = values["-text_input-"]
+                                        modify_loop = False
+                                    else:
+                                        sg.popup("Error. The input must be 'y' or 'n'.")
+                                        self.__window_modify["-text_input-"].update("")
+                
+                elif modify == "2" and not quit_modifying: #add a new run or lift
                     discontinue = False
                     select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
                     cursor.execute(select_nodes, [ski_resort_to_modify])
@@ -658,14 +1698,31 @@ class Gui(Ui):
                     for item in node_names_unpacked:
                         node_names.append(item[0])
                     node_name = ""
-                    while node_name not in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
+
+                    if not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
                         if len(node_names) == 0:
-                            print(f"There are no nodes to which a run or lift can be added.\n")
+                            sg.popup("There are no nodes to which a run or lift can be added.")
                             discontinue = True
                         else:
-                            node_name = input(f"Enter the name of the ski lift station from which you want to edit a run or lift: (Previously created ski lift stations: {', '.join(node_names)})\n")
-                    
-                    if not discontinue:
+                            self.__window_modify["-text-"].update(f"Enter the name of the ski lift station from which you want to add a run or lift:\n({"\n".join(node_names)})")
+                    while modify_loop and not quit_modifying and not discontinue:
+                        event, values = self.__window_modify.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            modify_loop = False
+                            quit_modifying = True
+                        elif event == "-cancel-":
+                            self.__window_modify["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"] in node_names and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                modify_loop = False
+                                node_name = values["-text_input-"]
+                            else:
+                                sg.popup("Error. The ski lift station name must start with a letter and already exist.")
+                                self.__window_modify["-text_input-"].update("")
+
+                    if not discontinue and not quit_modifying:
                         select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
                         cursor.execute(select_runs, [node_name, ski_resort_to_modify])
                         runs_unpacked = cursor.fetchall()
@@ -676,12 +1733,223 @@ class Gui(Ui):
                             end_node_name = cursor.fetchone()[0]
                             run_names.append(end_node_name)
                         run_name = ""
-                        if len(run_names) == 0:
-                            print("There are no runs which can be modified.")
+                        if len(node_names) == 0:
+                            sg.popup("There is only one ski lift station in this ski resort so no runs can be created.")
+                        elif run_names == node_names:
+                            sg.popup("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
                         else:
-                            while run_name not in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
-                                run_name = input(f"Enter the end ski lift station of a run:\nPreviously created ski lift stations: ({', '.join(run_names)})\n")
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at:\n({"\n".join(node_names)})\nSki lift stations to which there is already a run:\n({"\n".join(run_names)})")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in node_names and values["-text_input-"] not in run_names and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                        modify_loop = False
+                                        run_name = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The name entered must not already be a run, be the same as the node name and start with a letter.")
+                                        self.__window_modify["-text_input-"].update("")
 
+                            if not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the length of the run (minutes):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"].isnumeric():
+                                        modify_loop = False
+                                        length = int(values["-text_input-"])
+                                    else:
+                                        sg.popup("Error. The length must be a number.")
+                                        self.__window_modify["-text_input-"].update("")
+
+                            if not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the opening time of the run (hh:mm):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        modify_loop = False
+                                        opening = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                                        self.__window_modify["-text_input-"].update("")
+
+                            if not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the closing time of the run (hh:mm):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        if self.__compare_greater(values["-text_input-"], opening):
+                                            modify_loop = False
+                                            closing = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The closing time must be after the opening time.")
+                                            self.__window_modify["-text_input-"].update("")
+                                    else:
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                                        self.__window_modify["-text_input-"].update("")
+
+                            lift = ""
+                            if not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Is this a lift or a run ('l' or 'r'):")
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in ["l","r"]:
+                                        modify_loop = False
+                                        lift = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The input must be 'l' or 'r'.")
+                                        self.__window_modify["-text_input-"].update("")
+
+                            if lift == "l" and not quit_modifying:
+                                lift = 1
+
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the type of lift ('gondola', 'chairlift', 'draglift'):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["gondola","chairlift","draglift"]:
+                                            modify_loop = False
+                                            lift_type = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be 'gondola', 'chairlift' or 'draglift'.")
+                                            self.__window_modify["-text_input-"].update("")
+                                difficulty = "none"
+                            elif lift == "r" and not quit_modifying:
+                                lift = 0
+                                lift_type = "none"
+
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the difficulty of the run ('green', 'blue', 'red', 'black'):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["green","blue","red","black"]:
+                                            modify_loop = False
+                                            difficulty = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be 'green', 'blue', 'red' or 'black'.")
+                                            self.__window_modify["-text_input-"].update("")
+
+                            if not quit_modifying:
+                                add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
+                                            VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
+                                cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
+
+                elif modify == "3" and not quit_modifying: #modify an existing run
+                    discontinue = False
+                    select_nodes = "SELECT node_name FROM nodes WHERE resort_name=?;"
+                    cursor.execute(select_nodes, [ski_resort_to_modify])
+                    node_names_unpacked = cursor.fetchall()
+                    node_names =[]
+                    for item in node_names_unpacked:
+                        node_names.append(item[0])
+
+                    if not quit_modifying:
+                        modify_loop = True
+                        self.__window_modify["-text_input-"].update("")
+                        if len(node_names) == 0:
+                            sg.popup(f"There are no nodes to which a run or lift can be added.\n")
+                            discontinue = True
+                        else:
+                            self.__window_modify["-text-"].update(f"Enter the name of the ski lift station from which you want to modify a run or lift: (Possible ski lift station names)\n({"\n".join(node_names)})")                    
+                    while modify_loop and not quit_modifying and not discontinue:
+                        event, values = self.__window_modify.read()
+                        if event == "-return-" or event == sg.WIN_CLOSED:
+                            modify_loop = False
+                            quit_modifying = True
+                        elif event == "-cancel-":
+                            self.__window_modify["-text_input-"].update("")
+                        elif event == "-submit-":
+                            if values["-text_input-"] in node_names and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                modify_loop = False
+                                node_name = values["-text_input-"]
+                            else:
+                                sg.popup("Error. The ski lift station name must start with a letter and already exist.")
+                                self.__window_modify["-text_input-"].update("")
+                    
+                    if not discontinue and not quit_modifying:
+                        select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
+                        cursor.execute(select_runs, [node_name, ski_resort_to_modify])
+                        runs_unpacked = cursor.fetchall()
+                        run_names = []
+                        for i in range(len(runs_unpacked)):
+                            select_end_node_name = "SELECT node_name FROM nodes WHERE node_id=?;"
+                            cursor.execute(select_end_node_name, [runs_unpacked[i][2]])
+                            end_node_name = cursor.fetchone()[0]
+                            run_names.append(end_node_name)
+
+                        if len(run_names) == 0:
+                            sg.popup("There are no runs which can be modified.")
+                        else:
+                            modify_loop = True
+                            self.__window_modify["-text_input-"].update("")
+                            self.__window_modify["-text-"].update(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at:\n({"\n".join(node_names)})\nSki lift stations to which there is already a run:\n({"\n".join(run_names)})")
+                            
+                            while modify_loop and not quit_modifying:
+                                event, values = self.__window_modify.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    modify_loop = False
+                                    quit_modifying = True
+                                elif event == "-cancel-":
+                                    self.__window_modify["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"] in run_names and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                        modify_loop = False
+                                        run_name = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The name entered must be a run, not the same as the node name and start with a letter.")
+                                        self.__window_modify["-text_input-"].update("")
+                            
                             select_node_id = "SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?;"
                             cursor.execute(select_node_id, [node_name, ski_resort_to_modify])
                             node_id = cursor.fetchone()[0]
@@ -691,49 +1959,173 @@ class Gui(Ui):
                             select_lift_or_run = "SELECT lift FROM runs WHERE node_id=? AND end_node_id=?;"
                             cursor.execute(select_lift_or_run, [node_id, end_node_id])
                             lift_or_run = cursor.fetchone()[0]
-                            modify3_option = ""
-                            if lift_or_run == 0:
-                                while modify3_option not in ["1","2","3","4","5","6"]:    
-                                    modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n6. Difficulty\n")
-                            elif lift_or_run == 1:
-                                while modify3_option not in ["1","2","3","4","5","7"]:
-                                    modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n7. Lift type\n")
 
-                            if modify3_option == "1":
-                                length = input("Enter the new length of the run (minutes): ") #Validation
-                                modify_run = "UPDATE runs SET run_length=? WHERE node_id=? AND end_node_id=?;"
-                                cursor.execute(modify_run, [length, node_id, end_node_id])
-                            elif modify3_option == "2":
-                                opening = input("Enter the new opening time of the run (hh:mm): ") #Validation
-                                modify_run = "UPDATE runs SET opening=? WHERE node_id=? AND end_node_id=?;"
-                                cursor.execute(modify_run, [opening, node_id, end_node_id])
-                            elif modify3_option == "3":
-                                closing = input("Enter the new closing time of the run (hh:mm): ") #Validation
-                                modify_run = "UPDATE runs SET closing=? WHERE node_id=? AND end_node_id=?;"
-                                cursor.execute(modify_run, [closing, node_id, end_node_id])
-                            elif modify3_option == "4":
+                            modify3_option = ""
+                            if lift_or_run == 0 and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n6. Difficulty\n")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["1","2","3","4","5","6"]:
+                                            modify_loop = False
+                                            modify3_option = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be '1', '2', '3', '4', '5' or '6'.")
+                                            self.__window_modify["-text_input-"].update("")
+
+                            elif lift_or_run == 1 and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n6. Difficulty\n7. Lift type\n")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["1","2","3","4","5","6","7"]:
+                                            modify_loop = False
+                                            modify3_option = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be '1', '2', '3', '4', '5', '6' or '7'.")
+                                            self.__window_modify["-text_input-"].update("")
+
+                            if modify3_option == "1" and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the new length of the run (minutes):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"].isnumeric():
+                                            modify_loop = False
+                                            length = int(values["-text_input-"])
+                                        else:
+                                            sg.popup("Error. The length must be a number.")
+                                            self.__window_modify["-text_input-"].update("")
+                                if not quit_modifying:
+                                    modify_run = "UPDATE runs SET run_length=? WHERE node_id=? AND end_node_id=?;"
+                                    cursor.execute(modify_run, [length, node_id, end_node_id])
+
+                            elif modify3_option == "2" and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the new opening time of the run (hh:mm):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                            modify_loop = False
+                                            opening = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The time entered must be in the format hh:mm.")
+                                            self.__window_modify["-text_input-"].update("")
+                                if not quit_modifying:
+                                    modify_run = "UPDATE runs SET opening=? WHERE node_id=? AND end_node_id=?;"
+                                    cursor.execute(modify_run, [opening, node_id, end_node_id])
+
+                            elif modify3_option == "3" and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the new closing time of the run (hh:mm):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                            if self.__compare_greater(values["-text_input-"], opening):
+                                                modify_loop = False
+                                                closing = values["-text_input-"]
+                                            else:
+                                                sg.popup("Error. The closing time must be after the opening time.")
+                                                self.__window_modify["-text_input-"].update("")
+                                        else:
+                                            sg.popup("Error. The time entered must be in the format hh:mm.")
+                                            self.__window_modify["-text_input-"].update("")
+                                if not quit_modifying:
+                                    modify_run = "UPDATE runs SET closing=? WHERE node_id=? AND end_node_id=?;"
+                                    cursor.execute(modify_run, [closing, node_id, end_node_id])
+                            elif modify3_option == "4" and not quit_modifying:
                                 if lift_or_run == 0:
                                     modify_run = "UPDATE runs SET lift=1 WHERE node_id=? AND end_node_id=?;"
                                     cursor.execute(modify_run, [node_id, end_node_id])
                                 elif lift_or_run == 1:
                                     modify_run = "UPDATE runs SET lift=0 WHERE node_id=? AND end_node_id=?;"
                                     cursor.execute(modify_run, [node_id, end_node_id])
-                            elif modify3_option == "5":
+                            elif modify3_option == "5" and not quit_modifying:
                                 close_run = "UPDATE runs SET run_length=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(close_run, [inf, node_id, end_node_id])
-                            elif modify3_option == "6":
-                                difficulty = input("Enter the new difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
-                                modify_run = "UPDATE runs SET difficulty=? WHERE node_id=? AND end_node_id=?;"
-                                cursor.execute(modify_run, [difficulty, node_id, end_node_id])
-                            elif modify3_option == "7":
-                                lift_type = input("Enter the new type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
-                                modify_run = "UPDATE runs SET lift_type=? WHERE node_id=? AND end_node_id=?;"
-                                cursor.execute(modify_run, [lift_type, node_id, end_node_id])
+                            elif modify3_option == "6" and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the new difficulty of the run ('green', 'blue', 'red', 'black'):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["green","blue","red","black"]:
+                                            modify_loop = False
+                                            difficulty = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be 'green', 'blue', 'red' or 'black'.")
+                                            self.__window_modify["-text_input-"].update("")
+                                if not quit_modifying:
+                                    modify_run = "UPDATE runs SET difficulty=? WHERE node_id=? AND end_node_id=?;"
+                                    cursor.execute(modify_run, [difficulty, node_id, end_node_id])
+                            elif modify3_option == "7" and not quit_modifying:
+                                modify_loop = True
+                                self.__window_modify["-text_input-"].update("")
+                                self.__window_modify["-text-"].update(f"Enter the new type of lift ('gondola', 'chairlift', 'draglift'):")
+                                while modify_loop and not quit_modifying:
+                                    event, values = self.__window_modify.read()
+                                    if event == "-return-" or event == sg.WIN_CLOSED:
+                                        modify_loop = False
+                                        quit_modifying = True
+                                    elif event == "-cancel-":
+                                        self.__window_modify["-text_input-"].update("")
+                                    elif event == "-submit-":
+                                        if values["-text_input-"] in ["gondola","chairlift","draglift"]:
+                                            modify_loop = False
+                                            lift_type = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The input must be 'gondola', 'chairlift' or 'draglift'.")
+                                            self.__window_modify["-text_input-"].update("")
+                                if not quit_modifying:
+                                    modify_run = "UPDATE runs SET lift_type=? WHERE node_id=? AND end_node_id=?;"
+                                    cursor.execute(modify_run, [lift_type, node_id, end_node_id])
 
+                self.__window_modify.close()
                 conn.commit()
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
-
+            
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
@@ -789,7 +2181,6 @@ class Gui(Ui):
                 self.__window_delete["-resort_name"].update("")
         self.__window_delete.close()
 
-#TESTING
 if __name__ == "__main__":
     ui = Gui()
     ui.menu()

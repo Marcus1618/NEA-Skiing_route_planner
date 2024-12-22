@@ -22,10 +22,12 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         self.__ski_resort_object.time = start_time
         self.__ski_resort_object.check_open()
         if latitude != "N/A" and longitude != "N/A":
-            self.__url_weather = f"https://api.tomorrow.io/v4/weather/forecast?location={latitude}%2C%20{longitude}&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
+            self.__previous_snow = "N/A"
+            self.__current_snow = "N/A"
+            self.__temperature = "N/A"
         else:
             self.__url_weather = Plan_route.URL_WEATHER
-        self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
+            self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
     
     def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2
         h1, m1 = t1.split(":")
@@ -553,7 +555,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 time_value = self.__length - time_elapsed - time_from_start
 
                 if max(priorities) >= 0: #If a sequence of three moves is still viable (the algorithm has entered this edge case since there is no longer a route to the starting node without passing through a closed lift)
-                    chosen_node, time_elapsed, route = self.__complete_move(priorities,adjacent_nodes,time_elapsed,route)
+                    chosen_node, time_elapsed, route = self.__complete_move(priorities,adjacent_nodes,time_elapsed,route, chosen_node)
                     
                 elif max(priorities) != -inf and chosen_node.name == self.__start: #If there is not time left for a sequence of three moves and the route has returned to the starting node
                     route, change, time_elapsed, chosen_node = self.__two_move_route(chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time)
@@ -589,7 +591,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         if route[-1]["start"] != self.__start: #Check if the route ends at the starting node
             returned_to_start = False
-        return route, returned_to_start
+        return route, returned_to_start, self.__length
 
 ###############################
 # GROUP A Skill: Priority queue
@@ -631,27 +633,3 @@ class Priority_queue(): #Implementation of a circular, priority queue using a st
     
     def isFull(self): #Checks if the queue is full
         return self.__size == self.__max_length
-
-if __name__ == "__main__":
-    example = Ski_resorts()
-    example.add_resort("Val Thorens")
-    example.resorts["Val Thorens"].add_ski_node("Plein Sud bottom")
-    example.resorts["Val Thorens"].nodes["Plein Sud bottom"].add_run("Plein Sud top",10, "08:00", "17:00")
-    example.resorts["Val Thorens"].add_ski_node("Plein Sud top")
-    example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers bottom",5, "00:00", "23:59")
-    example.resorts["Val Thorens"].nodes["Plein Sud top"].add_run("Pionniers top",1, "00:00", "23:59")
-    example.resorts["Val Thorens"].add_ski_node("3 Vallees bottom")
-    example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("Plein Sud bottom",15, "00:00", "23:59")
-    example.resorts["Val Thorens"].nodes["3 Vallees bottom"].add_run("3 Vallees top",6, "08:30", "16:00")
-    example.resorts["Val Thorens"].add_ski_node("3 Vallees top")
-    example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("3 Vallees bottom",5, "00:00", "23:59")
-    example.resorts["Val Thorens"].nodes["3 Vallees top"].add_run("Plein Sud top",4, "00:00", "23:59")
-    example.resorts["Val Thorens"].add_ski_node("Pionniers bottom")
-    example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Plein Sud bottom",10, "00:00", "23:59")
-    example.resorts["Val Thorens"].nodes["Pionniers bottom"].add_run("Pionniers top",4, "08:00", "16:30")
-    example.resorts["Val Thorens"].add_ski_node("Pionniers top")
-    example.resorts["Val Thorens"].nodes["Pionniers top"].add_run("3 Vallees bottom",1, "00:00", "23:59")
-
-    print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","00:53","07:00").get_route(False))
-    #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud top","01:00","07:00").get_route())
-    #print(Plan_route(example.resorts["Val Thorens"],"Plein Sud bottom","00:50","8:15").__dijkstras_traversal("Plein Sud bottom",False))

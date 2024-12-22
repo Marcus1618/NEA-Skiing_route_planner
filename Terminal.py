@@ -226,8 +226,11 @@ class Terminal(Ui):
         while valid == None:
             length = input("How long do you want to ski for (hh:mm): ")
 
-            if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', length):
-                valid = True
+            try:
+                if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', length):
+                    valid = True
+            except:
+                print("Error. The length of time that you want to ski for must be in the format hh:mm.")
         h,m = length.split(":")
         length = int(h)*60 + int(m)
 
@@ -244,7 +247,7 @@ class Terminal(Ui):
         valid = None
         while valid == None:
             start_time = input("At what time do you want to start your route (hh:mm): ")
-            if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
+            if int(start_time[start_time.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
                 valid = True
         route_start_time = start_time
         route_stop_time = self.__add_times(start_time, length)
@@ -262,6 +265,7 @@ class Terminal(Ui):
         break_time = ""
         break_length = 0
         park_repetitions = 0
+        previous_time = "00:00"
         if breaks == "y":
             while breaks == "y":
                 break_type = ""
@@ -270,27 +274,36 @@ class Terminal(Ui):
                 if break_type == "restaurant/amenity":
                     amenity_name = ""
                     while amenity_name not in self.__saved_ski_resorts.resorts[ski_resort].amenity_names:
-                        amenity_name = input(f"Enter the name of the restaurant/amenity that you want to stop at ({self.__saved_ski_resorts.resorts[ski_resort].amenity_names}): ")
+                        amenity_name = input(f"Enter the name of the restaurant/amenity that you want to stop at ({", ".join(self.__saved_ski_resorts.resorts[ski_resort].amenity_names)}): ")
                 else:
                     amenity_name = ""
                     while amenity_name not in self.__saved_ski_resorts.resorts[ski_resort].ski_park_names:
-                        amenity_name = input(f"Enter the name of the ski park that you want to stop at ({self.__saved_ski_resorts.resorts[ski_resort].ski_park_names}): ")
+                        amenity_name = input(f"Enter the name of the ski park that you want to stop at ({", ".join(self.__saved_ski_resorts.resorts[ski_resort].ski_park_names)}): ")
 
                 valid = None
                 while valid == None:
                     break_time = input("At what time do you want to visit this amenity (hh:mm): ")
                     if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
                         if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
-                            valid = True
+                            if self.__compare_greater(break_time, previous_time):
+                                previous_time = break_time
+                                valid = True
+                            else:
+                                print("Error. The time that you want to visit this amenity at must be after the time that you visited the previous amenity at.")
                         else:
                             print("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
+                    else:
+                        print("Error. The time that you want to visit this amenity at must be in the format hh:mm.")
 
                 if break_type == "restaurant/amenity":
                     break_length = 0
                     allowed_time = self.__time_difference(break_time, route_stop_time)
                     valid = False
                     while valid == False:
-                        break_length = int(input("How long do you want to spend at this restaurant/amenity (minutes): "))
+                        try:
+                            break_length = int(input("How long do you want to spend at this restaurant/amenity (minutes): "))
+                        except ValueError:
+                            print("Error. The break length must be a positive integer.")
                         if break_length > 0:
                             if break_length <= allowed_time:
                                 valid = True
@@ -332,10 +345,15 @@ class Terminal(Ui):
                     length = self.__time_difference(route_start_time,route_stop_time)
                     end_node = original_start
                 route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], end_node, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
-                route, returned_to_start = route_planning.get_route(as_close_to_time, route, start, time_elapsed)
+                route, returned_to_start, new_length = route_planning.get_route(as_close_to_time, route, start, time_elapsed)
 
                 if not returned_to_start:
                     break
+                if new_length > length:
+                    for break_num in range(len(breaks_data)):
+                        breaks_data[break_num][2] = self.__add_times(breaks_data[break_num][2], new_length-length)
+                    end_time = self.__add_times(end_time, new_length-length)
+                    length = new_length
                 if plan_num < len(breaks_data):
                     time_elapsed = route[-1]["time_elapsed"]
                     if breaks_data[plan_num][0] == "restaurant/amenity":
@@ -349,11 +367,14 @@ class Terminal(Ui):
                     time_elapsed = route[-1]["time_elapsed"]
             else:
                 route_planning = Plan_route(self.__saved_ski_resorts.resorts[ski_resort], start, length, start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude)
-                route, returned_to_start = route_planning.get_route(as_close_to_time, route, start, time_elapsed) #Returns a list of dictionaries containing the node moved to and the time elapsed
-        print(route)
+                route, returned_to_start, length = route_planning.get_route(as_close_to_time, route, start, time_elapsed) #Returns a list of dictionaries containing the node moved to and the time elapsed
+        
         for i in range(len(route)-1):
             if route[i+1]["pause"] == True:
-                print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                if i != 0:
+                    print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
+                else:
+                    print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes due to ski lifts not yet being open (route length increased by {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
             elif route[i+1]["break"] == True:
                 print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({self.__saved_ski_resorts.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
             else: #add lift/run from x to y
@@ -383,7 +404,9 @@ class Terminal(Ui):
 
         creating = True
         while creating: #Allow any number of ski lift stations to be created
-            create_node = input("Do you want to create a new ski lift station? (y/n): ") #Validation
+            create_node = ""
+            while create_node not in ["y","n"]:
+                create_node = input("Do you want to create a new ski lift station? (y/n): ")
             if create_node == "y":
                 node_name = ""
                 while node_name in self.__saved_ski_resorts.resorts[ski_resort_name].nodes or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
@@ -394,7 +417,10 @@ class Terminal(Ui):
                 node_type = ""
                 while node_type not in ["s","p","a"]:
                     node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
-                altitude = input("Enter the altitude of the ski lift station: ") #Validation
+                altitude = ""
+                while altitude.isnumeric() == False:
+                    altitude = input("Enter the altitude of the ski lift station: ")
+                altitude = int(altitude)
                 if node_type == "p":
                     ski_park_length = 0
                     while ski_park_length < 1:
@@ -416,20 +442,44 @@ class Terminal(Ui):
                             run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")   
                         else:
                             run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
-                    length = input("Enter the length of the run (minutes): ") #Validation
-                    opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                    closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
-                    lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                    length = ""
+                    while length.isnumeric() == False:
+                        length = input("Enter the length of the run (minutes): ")
+                    length = int(length)
+                    opening = ""
+                    valid = False
+                    while not valid:
+                        opening = input("Enter the opening time of the run (hh:mm): ")
+                        if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                            valid = True
+                    closing = ""
+                    valid = False
+                    while not valid:
+                        closing = input("Enter the closing time of the run (hh:mm): ")
+                        if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                            if self.__compare_greater(closing, opening):
+                                valid = True
+                            else:
+                                print("Error. The closing time must be after the opening time.")
+                    lift = ""
+                    while lift not in ["l","r"]:
+                        lift = input("Is this a lift or a run ('l' or 'r'): ")
                     if lift == "l":
                         lift = 1
-                        lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                        lift_type = ""
+                        while lift_type not in ["gondola","chairlift","draglift"]:
+                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ")
                         difficulty = "none"
                     elif lift == "r":
                         lift = 0
                         lift_type = "none"
-                        difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
+                        difficulty = ""
+                        while difficulty not in ["green","blue","red","black"]:
+                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ")
                     self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
-                    creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
+                    creating_run = ""
+                    while creating_run not in ["y","n"]:
+                        creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Post loop repetition test to ensure that at least one run is added to each ski lift station
             elif create_node == "n":
                 creating = False
         
@@ -441,7 +491,10 @@ class Terminal(Ui):
                 for run in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs: #run is the run object
                     if run.name not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes:
                         print(f"Node {run.name} must be created since it was used as the end of a run but has not been created.")
-                        altitude = input("Enter the altitude of the ski lift station: ") #Validation
+                        altitude = ""
+                        while altitude.isnumeric() == False:
+                            altitude = input("Enter the altitude of the ski lift station: ")
+                        altitude = int(altitude)
                         self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
                         creating_run = "y"
                         while creating_run == "y":
@@ -453,18 +506,44 @@ class Terminal(Ui):
                                     run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")
                                 else:
                                     run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
-                            length = input("Enter the length of the run (minutes): ") #Validation
-                            opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                            closing = input("Enter the closing time of the run (hh:mm): ") #Validation
-                            lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                            length = ""
+                            while length.isnumeric() == False:
+                                length = input("Enter the length of the run (minutes): ")
+                            length = int(length)
+                            opening = ""
+                            valid = False
+                            while not valid:
+                                opening = input("Enter the opening time of the run (hh:mm): ")
+                                if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                    valid = True
+                            closing = ""
+                            valid = False
+                            while not valid:
+                                closing = input("Enter the closing time of the run (hh:mm): ")
+                                if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                    if self.__compare_greater(closing, opening):
+                                        valid = True
+                                    else:
+                                        print("Error. The closing time must be after the opening time.")
+                            lift = ""
+                            while lift not in ["l","r"]:
+                                lift = input("Is this a lift or a run ('l' or 'r'): ")
                             if lift == "l":
                                 lift = 1
+                                lift_type = ""
+                                while lift_type not in ["gondola","chairlift","draglift"]:
+                                    lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ")
+                                difficulty = "none"
                             elif lift == "r":
                                 lift = 0
-                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black' or 'none' if it is a lift): ") #Validation
-                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift' or 'none' if it is a run): ") #Validation
+                                lift_type = "none"
+                                difficulty = ""
+                                while difficulty not in ["green","blue","red","black"]:
+                                    difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ")
                             self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
-                            creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
+                            creating_run = ""
+                            while creating_run not in ["y","n"]:
+                                creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Post loop repetition test to ensure that at least one run is added to each ski lift station
                         break_loop = True #The loop will break if a new ski lift station is created since the dictionary being iterated over has changed
                     if break_loop:
                         break
@@ -520,7 +599,10 @@ class Terminal(Ui):
                     node_type = ""
                     while node_type not in ["s","p","a"]:
                         node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
-                    altitude = input("Enter the altitude of the ski lift station: ") #Validation
+                    altitude = ""
+                    while altitude.isnumeric() == False:
+                        altitude = input("Enter the altitude of the ski lift station: ")
+                    altitude = int(altitude)
                     if node_type == "p":
                         ski_park_length = 0
                         while ski_park_length < 1:
@@ -558,22 +640,46 @@ class Terminal(Ui):
                             break
                         while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
                             run_name = input(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at: ({', '.join(node_names)})\nSki lift stations to which there is already a run: ({', '.join(run_names)})\n")
-                        length = input("Enter the length of the run (minutes): ") #Validation
-                        opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                        closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
-                        lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                        length = ""
+                        while length.isnumeric() == False:
+                            length = input("Enter the length of the run (minutes): ")
+                        length = int(length)
+                        opening = ""
+                        valid = False
+                        while not valid:
+                            opening = input("Enter the opening time of the run (hh:mm): ")
+                            if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                valid = True
+                        closing = ""
+                        valid = False
+                        while not valid:
+                            closing = input("Enter the closing time of the run (hh:mm): ")
+                            if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                if self.__compare_greater(closing, opening):
+                                    valid = True
+                                else:
+                                    print("Error. The closing time must be after the opening time.")
+                        lift = ""
+                        while lift not in ["l","r"]:
+                            lift = input("Is this a lift or a run ('l' or 'r'): ")
                         if lift == "l":
                             lift = 1
-                            lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                            lift_type = ""
+                            while lift_type not in ["gondola","chairlift","draglift"]:
+                                lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ")
                             difficulty = "none"
                         elif lift == "r":
                             lift = 0
                             lift_type = "none"
-                            difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
+                            difficulty = ""
+                            while difficulty not in ["green","blue","red","black"]:
+                                difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ")
                         add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
                                     VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
                         cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
-                        creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Validation #Post loop repetition test to ensure that at least one run is added to each ski lift station
+                        creating_run = ""
+                        while creating_run not in ["y","n"]:
+                            creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Post loop repetition test to ensure that at least one run is added to each ski lift station
                 
                 elif modify == "2": #add a new run or lift
                     discontinue = False
@@ -608,18 +714,40 @@ class Terminal(Ui):
                         else:
                             while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
                                 run_name = input(f"Enter the end ski lift station of a run:\nSki lift stations that the run could end at: ({', '.join(node_names)})\nSki lift stations to which there is already a run: ({', '.join(run_names)})\n")
-                            length = input("Enter the length of the run (minutes): ") #Validation
-                            opening = input("Enter the opening time of the run (hh:mm): ") #Validation
-                            closing = input("Enter the closing time of the run (hh:mm): ") #Validation - has to be after opening time
-                            lift = input("Is this a lift or a run ('l' or 'r'): ") #Validation
+                            length = ""
+                            while length.isnumeric() == False:
+                                length = input("Enter the length of the run (minutes): ")
+                            length = int(length)
+                            opening = ""
+                            valid = False
+                            while not valid:
+                                opening = input("Enter the opening time of the run (hh:mm): ")
+                                if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                    valid = True
+                            closing = ""
+                            valid = False
+                            while not valid:
+                                closing = input("Enter the closing time of the run (hh:mm): ")
+                                if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                    if self.__compare_greater(closing, opening):
+                                        valid = True
+                                    else:
+                                        print("Error. The closing time must be after the opening time.")
+                            lift = ""
+                            while lift not in ["l","r"]:
+                                lift = input("Is this a lift or a run ('l' or 'r'): ")
                             if lift == "l":
                                 lift = 1
-                                lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                                lift_type = ""
+                                while lift_type not in ["gondola","chairlift","draglift"]:
+                                    lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ")
                                 difficulty = "none"
                             elif lift == "r":
                                 lift = 0
                                 lift_type = "none"
-                                difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
+                                difficulty = ""
+                                while difficulty not in ["green","blue","red","black"]:
+                                    difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ")
                             add_run = """INSERT INTO runs (node_id, end_node_id, run_length, opening, closing, lift, difficulty, lift_type)
                                         VALUES ((SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?),?,?,?,?,?,?);"""
                             cursor.execute(add_run, [node_name, ski_resort_to_modify, run_name, ski_resort_to_modify, length, opening, closing, lift, difficulty, lift_type])
@@ -675,15 +803,31 @@ class Terminal(Ui):
                                     modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n7. Lift type\n")
 
                             if modify3_option == "1":
-                                length = input("Enter the new length of the run (minutes): ") #Validation
+                                length = ""
+                                while length.isnumeric() == False:
+                                    length = input("Enter the new length of the run (minutes): ")
+                                length = int(length)
                                 modify_run = "UPDATE runs SET run_length=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [length, node_id, end_node_id])
                             elif modify3_option == "2":
-                                opening = input("Enter the new opening time of the run (hh:mm): ") #Validation
+                                opening = ""
+                                valid = False
+                                while not valid:
+                                    opening = input("Enter the opening time of the run (hh:mm): ")
+                                    if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                        valid = True
                                 modify_run = "UPDATE runs SET opening=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [opening, node_id, end_node_id])
                             elif modify3_option == "3":
-                                closing = input("Enter the new closing time of the run (hh:mm): ") #Validation
+                                closing = ""
+                                valid = False
+                                while not valid:
+                                    closing = input("Enter the closing time of the run (hh:mm): ")
+                                    if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                        if self.__compare_greater(closing, opening):
+                                            valid = True
+                                        else:
+                                            print("Error. The closing time must be after the opening time.")
                                 modify_run = "UPDATE runs SET closing=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [closing, node_id, end_node_id])
                             elif modify3_option == "4":
@@ -697,11 +841,15 @@ class Terminal(Ui):
                                 close_run = "UPDATE runs SET run_length=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(close_run, [inf, node_id, end_node_id])
                             elif modify3_option == "6":
-                                difficulty = input("Enter the new difficulty of the run ('green', 'blue', 'red', 'black'): ") #Validation
+                                difficulty = ""
+                                while difficulty not in ["green","blue","red","black"]:
+                                    difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ")
                                 modify_run = "UPDATE runs SET difficulty=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [difficulty, node_id, end_node_id])
                             elif modify3_option == "7":
-                                lift_type = input("Enter the new type of lift ('gondola', 'chairlift', 'draglift'): ") #Validation
+                                lift_type = ""
+                                while lift_type not in ["gondola","chairlift","draglift"]:
+                                    lift_type = input("Enter the type of lift ('gondola', 'chairlift', 'draglift'): ")
                                 modify_run = "UPDATE runs SET lift_type=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [lift_type, node_id, end_node_id])
 
@@ -743,7 +891,6 @@ class Terminal(Ui):
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
 
-#TESTING
 if __name__ == "__main__":
     ui = Terminal()
     ui.menu()
