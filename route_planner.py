@@ -49,7 +49,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         else:
             return False
     
-    def __add_times(self, t1, t2):
+    def __add_times(self, t1, t2): #Adds two times together where t1 is in the format hh:mm and t2 is an integer number of minutes
         h1, m1 = t1.split(":")
         m2 = t2
         mins = int(m1) + int(m2)
@@ -111,7 +111,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 max_altitude = node.altitude
         return min_altitude, max_altitude
 
-    def __generate_values(self, start_node, end_node): #Generates the value of a run - receives a node object and a run object as parameters
+    def __generate_values(self, start_node, end_node): #Generates the value of a run based on its difficulty, altitude, number of repetitions and lift type preference - receives a node object and a run object as parameters
         value = 0
         #difficulty score
         if self.__max_difficulty == "black":

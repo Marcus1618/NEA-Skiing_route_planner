@@ -6,7 +6,7 @@ DATABASE_NAME = "ski_resorts.db"
 ##############################################
 # GROUP A Skill: Cross-table parameterised SQL
 ##############################################
-def add_resort_to_database(ski_resort_object, new_resort_name):
+def add_resort_to_database(ski_resort_object, new_resort_name): #Adds a newly created ski resort into the database
     try:
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()
@@ -29,7 +29,7 @@ def add_resort_to_database(ski_resort_object, new_resort_name):
     except sqlite3.OperationalError as e:
         print("Failed to open database: ", e)
 
-def sync_from_database(ski_resort_object):
+def sync_from_database(ski_resort_object): #Copies the ski resorts from the database to a local data structure of the ski resorts as objects
     try:
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()

@@ -53,7 +53,7 @@ class Gui(Ui):
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
 
-    def menu(self): #Allows one of seven options that the program allows to be selected
+    def menu(self): #Allows one of seven options that the program allows to be selected - the algorithm for all the functions are the same as in the terminal except the input is taken from the GUI
         while True:
             menu_layout = [
             [sg.Text("Menu")],
@@ -209,7 +209,7 @@ class Gui(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_park("Snow park 1", 2400, 4)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Snow park 1"].add_run("Plein Sud bottom", 10, "00:00", "23:59", 0, "blue", "None")
 
-    def __advanced_options(self):
+    def __advanced_options(self): #Allows the user to input advanced options for the route generation
         quit_generate = False
         weather = ""
         as_close_to_time = ""
@@ -375,6 +375,7 @@ class Gui(Ui):
             [sg.Button("Return to menu", key="-return-")]
         ]
         self.__window_generate = sg.Window("Route requirements", generate_layout)
+        #The window will be re-used for all of the user inputs within this function with the text prompt being updated each time to request the different input
 
         quit_generate = False
         generate_loop = True
@@ -739,7 +740,7 @@ class Gui(Ui):
                 route_output.append(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
             
             route_ouput_layout = [
-                [sg.Text(f"Instructions:\n{'\n'.join(route_output)}")],
+                [sg.Text(f"Instructions:\n{'\n'.join(route_output)}")], #Displays the route generated
                 [sg.Text("Enter the name of the route before saving:")],
                 [sg.InputText(key="-route_name-")],
                 [sg.Button("Save route", key="-Save-")],
@@ -766,7 +767,7 @@ class Gui(Ui):
     ################################################################################################
     # GROUP A Skill: Dynamic generation of objects based on complex user-defined use of an OOP model
     ################################################################################################
-    def __create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created
+    def __create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created - the algorithm is exactly the same as that when run in the terminal except inputs must be entered through the GUI
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
         self.__construct_example_ski_resort()
@@ -2129,7 +2130,7 @@ class Gui(Ui):
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
-    def __delete_ski_resort(self):
+    def __delete_ski_resort(self): #Deletes a ski resort from the database
         self.__saved_ski_resorts = Ski_resorts()
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts)
         self.__construct_example_ski_resort()

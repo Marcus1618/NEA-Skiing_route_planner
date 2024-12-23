@@ -15,7 +15,7 @@ def add_times(t1, t2): #Adds two times together where t1 is in the format hh:mm 
             mins = f"0{mins}"
         return f"{hours}:{mins}"
 
-def get_route_names():
+def get_route_names(): #Returns a list of all the route names that have been saved
     route_names = []
     try:
         with open(FILE_NAME, "r") as f:
@@ -28,7 +28,7 @@ def get_route_names():
         pass
     return route_names
 
-def view_previous_route(route_name):
+def view_previous_route(route_name): #Fetches the route data and ski resort of the route for a specific route name
     output_route = []
     with open(FILE_NAME, "r") as f:
         route_data = f.read().split("\n\n")
@@ -40,7 +40,7 @@ def view_previous_route(route_name):
                     output_route.append(line)
     return output_route, route_lines[1]
 
-def save_route(route_name, route, route_start_time, returned_to_start, ski_resort, ski_resort_object):
+def save_route(route_name, route, route_start_time, returned_to_start, ski_resort, ski_resort_object): #Saves the route data to a file in the format which it is displayed
     with open(FILE_NAME, "a") as f:
         f.write(f"{route_name}\n")
         f.write(f"{ski_resort}\n")        

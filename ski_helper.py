@@ -2,7 +2,7 @@ from Terminal import Terminal
 from GUI import Gui
 from sys import argv
 
-def usage():   
+def usage():  
     print(f"""
 Usage: {argv[0]} [g | t]
 g : run in the GUI

@@ -181,7 +181,7 @@ class Terminal(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_park("Snow park 1", 2400, 4)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Snow park 1"].add_run("Plein Sud bottom", 10, "00:00", "23:59", 0, "blue", "None")
 
-    def __advanced_options(self):
+    def __advanced_options(self): #Allows the user to input advanced options for the route generation
         weather = ""
         as_close_to_time = ""
         snow_conditions = ""
@@ -860,7 +860,7 @@ class Terminal(Ui):
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
-    def __delete_ski_resort(self):
+    def __delete_ski_resort(self): #Allows the user to delete a ski resort and all of its associated ski lift stations, runs and amenities
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()

@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
  
 class Display_graph():
    
-    def __init__(self):
+    def __init__(self): #Initialises the edges list
         self.__edges = []
 
-    def __add_edge(self, x, y, z): #adds edge between nodes x and y
+    def __add_edge(self, x, y, z): #Adds an edge between nodes x and y
         edge = (x, y, z)
         self.__edges.append(edge)
 
@@ -15,7 +15,7 @@ class Display_graph():
         G.add_edges_from(self.__edges)
         colours_list = []
         nodes = list(G.nodes())
-        for node in nodes:
+        for node in nodes: #Assigns colours to the nodes based on their type
             node_object = ski_resort_object.nodes[node]
             if node_object.__class__.__name__ == "Ski_node":
                 colours_list.append("blue")
