@@ -15,6 +15,9 @@ def add_times(t1, t2): #Adds two times together where t1 is in the format hh:mm 
             mins = f"0{mins}"
         return f"{hours}:{mins}"
 
+###########################
+# GROUP B Skill: Text files
+###########################
 def get_route_names(): #Returns a list of all the route names that have been saved
     route_names = []
     try:
@@ -28,6 +31,9 @@ def get_route_names(): #Returns a list of all the route names that have been sav
         pass
     return route_names
 
+###############################################
+# GROUP B Skill: Writing and reading from files
+###############################################
 def view_previous_route(route_name): #Fetches the route data and ski resort of the route for a specific route name
     output_route = []
     with open(FILE_NAME, "r") as f:
@@ -38,8 +44,11 @@ def view_previous_route(route_name): #Fetches the route data and ski resort of t
             if route_lines[0] == route_name:
                 for line in route_lines[2:]:
                     output_route.append(line)
-    return output_route, route_lines[1]
+    return output_route, route_lines[1] #Returns the route data as a list and the ski resort which the route is in
 
+###############################################
+# GROUP B Skill: Writing and reading from files
+###############################################
 def save_route(route_name, route, route_start_time, returned_to_start, ski_resort, ski_resort_object): #Saves the route data to a file in the format which it is displayed
     with open(FILE_NAME, "a") as f:
         f.write(f"{route_name}\n")

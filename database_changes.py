@@ -10,11 +10,11 @@ def add_resort_to_database(ski_resort_object, new_resort_name): #Adds a newly cr
     try:
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()
-            for node in ski_resort_object.resorts[new_resort_name].nodes.values():
+            for node in ski_resort_object.resorts[new_resort_name].nodes.values(): #Inserts the nodes of the ski resort into the database
                 node_insertion = """INSERT INTO nodes (node_name, resort_name, altitude, node_type, ski_park_length, amenity_type)
                                     VALUES (?,?,?,?,?,?);"""
                 cursor.execute(node_insertion, [node.name, new_resort_name, node.altitude, node.node_type, node.length, node.amenity_type])
-            for node in ski_resort_object.resorts[new_resort_name].nodes.values():
+            for node in ski_resort_object.resorts[new_resort_name].nodes.values(): #Inserts the runs of the ski resort into the database
                 select_node_id = "SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?;"
                 cursor.execute(select_node_id, [node.name, new_resort_name])
                 node_id = cursor.fetchone()[0]
@@ -36,12 +36,12 @@ def sync_from_database(ski_resort_object): #Copies the ski resorts from the data
             ski_resort_query = "SELECT resort_name FROM nodes;"
             cursor.execute(ski_resort_query)
             resort_names = set(cursor.fetchall())
-            for resort in resort_names:
+            for resort in resort_names: #Adds the ski resorts to the local data structure
                 ski_resort_object.add_resort(resort[0])
                 node_query = "SELECT node_id, node_name, altitude, node_type, ski_park_length, amenity_type FROM nodes WHERE resort_name=?;"
                 cursor.execute(node_query, [resort[0]])
                 nodes = cursor.fetchall()
-                for node in nodes:
+                for node in nodes: #Adds the nodes of the ski resort to the local data structure
                     node_type = node[3]
                     if node_type == "Ski lift station":
                         ski_resort_object.resorts[resort[0]].add_ski_node(node[1],node[2])
@@ -52,7 +52,7 @@ def sync_from_database(ski_resort_object): #Copies the ski resorts from the data
                     run_query = "SELECT * FROM runs WHERE node_id=?;"
                     cursor.execute(run_query, [node[0]])
                     runs = cursor.fetchall()
-                    for run in runs:
+                    for run in runs: #Adds the runs of the ski resort to the local data structure
                         end_node_name_select = "SELECT node_name FROM nodes WHERE node_id=?;"
                         cursor.execute(end_node_name_select, [run[2]])
                         end_node_name = cursor.fetchone()[0]

@@ -25,7 +25,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             self.__previous_snow = "N/A"
             self.__current_snow = "N/A"
             self.__temperature = "N/A"
-        else:
+        else: #If the latitude and longitude are not provided, the weather at the default location of Val Thorens is used
             self.__url_weather = Plan_route.URL_WEATHER
             self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
     
@@ -194,6 +194,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                     value += 1*Plan_route.LIFT_TYPE_MULTIPLIER
         return value
 
+    ######################################################################################################
+    # GROUP B Skill: Calling web service APIs and parsing JSON/XML to service a simple client-server model
+    ######################################################################################################
     def __get_weather(self, date): #Gets the weather for the ski resort
         day_index = 0
         if date == "today":
@@ -206,9 +209,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             day_index = 4
         headers = {"accept": "application/json"}
         response = requests.get(self.__url_weather, headers=headers)
-        if response.status_code == 200:
+        if response.status_code == 200: #If the API data request is successful, the weather data is extracted
             weather_data = response.json()
-            previous_snow = weather_data["timelines"]["daily"][day_index-1]["values"]["snowIntensityMax"]
+            previous_snow = weather_data["timelines"]["daily"][day_index-1]["values"]["snowIntensityMax"] #parsing the JSON data
             current_snow = weather_data["timelines"]["daily"][day_index]["values"]["snowIntensityMax"]
             temperature = weather_data["timelines"]["daily"][day_index]["values"]["temperatureAvg"]
         else:
