@@ -222,7 +222,7 @@ class Gui(Ui):
         as_close_to_time_input = ""
 
         generate_layout = [
-            [sg.Text("Do you want to return to the starting point as close to the time you specified as possible rather than always before it? (y/n):", key = "-text-")],
+            [sg.Text("Do you want the end time to be finish as close to rather than finish before? (y/n):", key = "-text-")],
             [sg.InputText(key="-text_input-")],
             [sg.Button("Submit", key="-submit-")],
             [sg.Button("Cancel", key="-cancel-")],
@@ -423,7 +423,7 @@ class Gui(Ui):
         if not quit_generate:
             generate_loop = True
             self.__window_generate["-text_input-"].update("")
-            self.__window_generate["-text-"].update(f"From which ski lift station do you want to start your route:\n({'\n'.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})")
+            self.__window_generate["-text-"].update(f"From which ski lift station do you want to start and end your route:\n({'\n'.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})")
         while generate_loop and not quit_generate:
             event, values = self.__window_generate.read()
             if event == "-return-" or event == sg.WIN_CLOSED:

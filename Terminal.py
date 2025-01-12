@@ -191,7 +191,7 @@ class Terminal(Ui):
         longitude = ""
         as_close_to_time_input = ""
         while as_close_to_time_input not in ["y","n"]:
-            as_close_to_time_input = input("Do you want to return to the starting point as close to the time you specified as possible rather than always before it? (y/n): ")
+            as_close_to_time_input = input("Do you want the end time to be finish as close to rather than finish before? (y/n): ")
         if as_close_to_time_input == "y":
             as_close_to_time = True
         else:
@@ -240,7 +240,7 @@ class Terminal(Ui):
 
         start = ""
         while start not in self.__saved_ski_resorts.resorts[ski_resort].nodes.keys():
-            start = input(f"From which ski lift station do you want to start your route: ({', '.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})\n")
+            start = input(f"From which ski lift station do you want to start and end your route: ({', '.join(self.__saved_ski_resorts.resorts[ski_resort].nodes.keys())})\n")
         original_start = start
 
         start_time = "00:00"

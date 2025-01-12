@@ -34,7 +34,7 @@ def get_route_names(): #Returns a list of all the route names that have been sav
 ###############################################
 # GROUP B Skill: Writing and reading from files
 ###############################################
-def view_previous_route(route_name): #Fetches the route data and ski resort of the route for a specific route name
+def view_previous_route(route_name): #Fetches the route data and ski resort of the route with the given name.
     output_route = []
     with open(FILE_NAME, "r") as f:
         route_data = f.read().split("\n\n")
