@@ -99,6 +99,7 @@ class Gui(Ui):
                     elif event == "-Submit-":
                         ski_resort_name = values["-ski_resort_name-"]
                         if ski_resort_name in self.__saved_ski_resorts.resorts.keys():
+                            self.__window_display.close()
                             Display_graph().display_ski_resort(self.__saved_ski_resorts.resorts[ski_resort_name])
                             break
                         else:
@@ -148,7 +149,7 @@ class Gui(Ui):
                             else:
                                 sg.popup("The route does not exist.")
                         elif event == "-Cancel-":
-                            self.__window_view["route_name"].update("")
+                            self.__window_view["-route_name-"].update("")
                 else:
                     sg.popup("There are no routes saved.")
                 self.__window_view.close()
@@ -304,7 +305,7 @@ class Gui(Ui):
                         self.__window_advanced_options["-text_input-"].update("")
             quit_options = True
             self.__window_advanced_options["-text_input-"].update("")
-            self.__window_advanced_options["-text-"].update(f"Enter the latitude of the resort (enter N/A if unknown):")
+            self.__window_advanced_options["-text-"].update(f"Enter the latitude of the resort (enter N/A if unknown or 'default' for the latitude of Val Thorens):")
             while quit_options and not quit_generate:
                 event, values = self.__window_advanced_options.read()
                 if event == "-return-" or event == sg.WIN_CLOSED:
@@ -313,7 +314,7 @@ class Gui(Ui):
                 elif event == "-cancel-":
                     self.__window_advanced_options["-text_input-"].update("")
                 elif event == "-submit-":
-                    if re.match(r'^-?\d{1,2}\.\d{4}$', values["-text_input-"]) or values["-text_input-"] == "N/A":
+                    if re.match(r'^-?\d{1,2}\.\d{4}$', values["-text_input-"]) or values["-text_input-"] == "N/A" or values["-text_input-"] == "default":
                         quit_options = False
                         latitude = values["-text_input-"]
                     else:
@@ -321,7 +322,7 @@ class Gui(Ui):
                         self.__window_advanced_options["-text_input-"].update("")
             quit_options = True
             self.__window_advanced_options["-text_input-"].update("")
-            self.__window_advanced_options["-text-"].update(f"Enter the longitude of the resort (enter N/A if unknown):")
+            self.__window_advanced_options["-text-"].update(f"Enter the longitude of the resort (enter N/A if unknown or 'default' for the latitude of Val Thorens):")
             while quit_options and not quit_generate:
                 event, values = self.__window_advanced_options.read()
                 if event == "-return-" or event == sg.WIN_CLOSED:
@@ -330,7 +331,7 @@ class Gui(Ui):
                 elif event == "-cancel-":
                     self.__window_advanced_options["-text_input-"].update("")
                 elif event == "-submit-":
-                    if re.match(r'^-?\d{1,3}\.\d{4}$', values["-text_input-"]) or values["-text_input-"] == "N/A":
+                    if re.match(r'^-?\d{1,3}\.\d{4}$', values["-text_input-"]) or values["-text_input-"] == "N/A" or values["-text_input-"] == "default":
                         quit_options = False
                         longitude = values["-text_input-"]
                     else:
@@ -451,12 +452,16 @@ class Gui(Ui):
             elif event == "-cancel-":
                 self.__window_generate["-text_input-"].update("")
             elif event == "-submit-":
-                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                    generate_loop = False
-                    start_time = values["-text_input-"]
-                    route_start_time = start_time
-                    route_stop_time = self.__add_times(start_time, length)
-                else:
+                try:
+                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                        generate_loop = False
+                        start_time = values["-text_input-"]
+                        route_start_time = start_time
+                        route_stop_time = self.__add_times(start_time, length)
+                    else:
+                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                        self.__window_generate["-text_input-"].update("")
+                except:
                     sg.popup("Error. The time entered must be in the format hh:mm.")
                     self.__window_generate["-text_input-"].update("")
 
@@ -564,19 +569,23 @@ class Gui(Ui):
                             elif event == "-cancel-":
                                 self.__window_generate["-text_input-"].update("")
                             elif event == "-submit-":
-                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                    break_time = values["-text_input-"]
-                                    if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
-                                        if self.__compare_greater(break_time, previous_time):
-                                            previous_time = break_time
-                                            generate_loop = False
+                                try:
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        break_time = values["-text_input-"]
+                                        if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
+                                            if self.__compare_greater(break_time, previous_time):
+                                                previous_time = break_time
+                                                generate_loop = False
+                                            else:
+                                                sg.popup("Error. The time that you want to visit this amenity at must be after the previous break.")
+                                                self.__window_generate["-text_input-"].update("")
                                         else:
-                                            sg.popup("Error. The time that you want to visit this amenity at must be after the previous break.")
+                                            sg.popup("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
                                             self.__window_generate["-text_input-"].update("")
                                     else:
-                                        sg.popup("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_generate["-text_input-"].update("")
-                                else:
+                                except:
                                     sg.popup("Error. The time entered must be in the format hh:mm.")
                                     self.__window_generate["-text_input-"].update("")
                         
@@ -988,10 +997,14 @@ class Gui(Ui):
                             elif event == "-cancel-":
                                 self.__window_create["-text_input-"].update("")
                             elif event == "-submit-":
-                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                    creating_loop = False
-                                    opening = values["-text_input-"]
-                                else:
+                                try:
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        creating_loop = False
+                                        opening = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                                        self.__window_create["-text_input-"].update("")
+                                except:
                                     sg.popup("Error. The time entered must be in the format hh:mm.")
                                     self.__window_create["-text_input-"].update("")
                         
@@ -1007,14 +1020,18 @@ class Gui(Ui):
                             elif event == "-cancel-":
                                 self.__window_create["-text_input-"].update("")
                             elif event == "-submit-":
-                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                    if self.__compare_greater(values["-text_input-"], opening):
-                                        creating_loop = False
-                                        closing = values["-text_input-"]
+                                try:
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        if self.__compare_greater(values["-text_input-"], opening):
+                                            creating_loop = False
+                                            closing = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The closing time must be after the opening time.")
+                                            self.__window_create["-text_input-"].update("")
                                     else:
-                                        sg.popup("Error. The closing time must be after the opening time.")
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_create["-text_input-"].update("")
-                                else:
+                                except:
                                     sg.popup("Error. The time entered must be in the format hh:mm.")
                                     self.__window_create["-text_input-"].update("")
                         
@@ -1188,10 +1205,14 @@ class Gui(Ui):
                                 elif event == "-cancel-":
                                     self.__window_create["-text_input-"].update("")
                                 elif event == "-submit-":
-                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                        creating_loop = False
-                                        opening = values["-text_input-"]
-                                    else:
+                                    try:
+                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                            creating_loop = False
+                                            opening = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The time entered must be in the format hh:mm.")
+                                            self.__window_create["-text_input-"].update("")
+                                    except:
                                         sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_create["-text_input-"].update("")
                             
@@ -1207,14 +1228,18 @@ class Gui(Ui):
                                 elif event == "-cancel-":
                                     self.__window_create["-text_input-"].update("")
                                 elif event == "-submit-":
-                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                        if self.__compare_greater(values["-text_input-"], opening):
-                                            creating_loop = False
-                                            closing = values["-text_input-"]
+                                    try:
+                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                            if self.__compare_greater(values["-text_input-"], opening):
+                                                creating_loop = False
+                                                closing = values["-text_input-"]
+                                            else:
+                                                sg.popup("Error. The closing time must be after the opening time.")
+                                                self.__window_create["-text_input-"].update("")
                                         else:
-                                            sg.popup("Error. The closing time must be after the opening time.")
+                                            sg.popup("Error. The time entered must be in the format hh:mm.")
                                             self.__window_create["-text_input-"].update("")
-                                    else:
+                                    except:
                                         sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_create["-text_input-"].update("")
                             
@@ -1573,10 +1598,14 @@ class Gui(Ui):
                             elif event == "-cancel-":
                                 self.__window_modify["-text_input-"].update("")
                             elif event == "-submit-":
-                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                    modify_loop = False
-                                    opening = values["-text_input-"]
-                                else:
+                                try:
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        modify_loop = False
+                                        opening = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
+                                        self.__window_modify["-text_input-"].update("")
+                                except:
                                     sg.popup("Error. The time entered must be in the format hh:mm.")
                                     self.__window_modify["-text_input-"].update("")
 
@@ -1592,14 +1621,18 @@ class Gui(Ui):
                             elif event == "-cancel-":
                                 self.__window_modify["-text_input-"].update("")
                             elif event == "-submit-":
-                                if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                    if self.__compare_greater(values["-text_input-"], opening):
-                                        modify_loop = False
-                                        closing = values["-text_input-"]
+                                try:
+                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                        if self.__compare_greater(values["-text_input-"], opening):
+                                            modify_loop = False
+                                            closing = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The closing time must be after the opening time.")
+                                            self.__window_modify["-text_input-"].update("")
                                     else:
-                                        sg.popup("Error. The closing time must be after the opening time.")
+                                        sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_modify["-text_input-"].update("")
-                                else:
+                                except:
                                     sg.popup("Error. The time entered must be in the format hh:mm.")
                                     self.__window_modify["-text_input-"].update("")
 
@@ -1788,10 +1821,14 @@ class Gui(Ui):
                                 elif event == "-cancel-":
                                     self.__window_modify["-text_input-"].update("")
                                 elif event == "-submit-":
-                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                        modify_loop = False
-                                        opening = values["-text_input-"]
-                                    else:
+                                    try:
+                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                            modify_loop = False
+                                            opening = values["-text_input-"]
+                                        else:
+                                            sg.popup("Error. The time entered must be in the format hh:mm.")
+                                            self.__window_modify["-text_input-"].update("")
+                                    except:
                                         sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_modify["-text_input-"].update("")
 
@@ -1807,14 +1844,18 @@ class Gui(Ui):
                                 elif event == "-cancel-":
                                     self.__window_modify["-text_input-"].update("")
                                 elif event == "-submit-":
-                                    if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                        if self.__compare_greater(values["-text_input-"], opening):
-                                            modify_loop = False
-                                            closing = values["-text_input-"]
+                                    try:
+                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                            if self.__compare_greater(values["-text_input-"], opening):
+                                                modify_loop = False
+                                                closing = values["-text_input-"]
+                                            else:
+                                                sg.popup("Error. The closing time must be after the opening time.")
+                                                self.__window_modify["-text_input-"].update("")
                                         else:
-                                            sg.popup("Error. The closing time must be after the opening time.")
+                                            sg.popup("Error. The time entered must be in the format hh:mm.")
                                             self.__window_modify["-text_input-"].update("")
-                                    else:
+                                    except:
                                         sg.popup("Error. The time entered must be in the format hh:mm.")
                                         self.__window_modify["-text_input-"].update("")
 
@@ -2034,10 +2075,14 @@ class Gui(Ui):
                                     elif event == "-cancel-":
                                         self.__window_modify["-text_input-"].update("")
                                     elif event == "-submit-":
-                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                            modify_loop = False
-                                            opening = values["-text_input-"]
-                                        else:
+                                        try:
+                                            if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                                modify_loop = False
+                                                opening = values["-text_input-"]
+                                            else:
+                                                sg.popup("Error. The time entered must be in the format hh:mm.")
+                                                self.__window_modify["-text_input-"].update("")
+                                        except:
                                             sg.popup("Error. The time entered must be in the format hh:mm.")
                                             self.__window_modify["-text_input-"].update("")
                                 if not quit_modifying:
@@ -2056,14 +2101,18 @@ class Gui(Ui):
                                     elif event == "-cancel-":
                                         self.__window_modify["-text_input-"].update("")
                                     elif event == "-submit-":
-                                        if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
-                                            if self.__compare_greater(values["-text_input-"], opening):
-                                                modify_loop = False
-                                                closing = values["-text_input-"]
+                                        try:
+                                            if int(values["-text_input-"][values["-text_input-"].index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', values["-text_input-"]):
+                                                if self.__compare_greater(values["-text_input-"], opening):
+                                                    modify_loop = False
+                                                    closing = values["-text_input-"]
+                                                else:
+                                                    sg.popup("Error. The closing time must be after the opening time.")
+                                                    self.__window_modify["-text_input-"].update("")
                                             else:
-                                                sg.popup("Error. The closing time must be after the opening time.")
+                                                sg.popup("Error. The time entered must be in the format hh:mm.")
                                                 self.__window_modify["-text_input-"].update("")
-                                        else:
+                                        except:
                                             sg.popup("Error. The time entered must be in the format hh:mm.")
                                             self.__window_modify["-text_input-"].update("")
                                 if not quit_modifying:

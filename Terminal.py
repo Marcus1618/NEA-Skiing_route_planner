@@ -203,10 +203,10 @@ class Terminal(Ui):
                 snow_conditions = input("What are the snow conditions like ('good', 'average', 'poor' or 'unknown): ")
             while weather not in ["today","tomorrow","2 days time","3 days time","unknown"]:
                 weather = input("On what day are you skiing? ('today', 'tomorrow', '2 days time', '3 days time' or 'unknown'): ")
-            while not(re.match(r'^-?\d{1,2}\.\d{4}$', latitude)) and latitude != "N/A":
-                latitude = input("Enter the latitude of the resort (enter N/A if unknown): ")
-            while not(re.match(r'^-?\d{1,3}\.\d{4}$', longitude)) and longitude != "N/A":
-                longitude = input("Enter the longitude of the resort (enter N/A if unknown): ")
+            while not(re.match(r'^-?\d{1,2}\.\d{4}$', latitude)) and latitude != "N/A" and latitude != "default":
+                latitude = input("Enter the latitude of the resort (enter 'N/A' if unknown or 'default' for the latitude of Val Thorens): ")
+            while not(re.match(r'^-?\d{1,3}\.\d{4}$', longitude)) and longitude != "N/A" and longitude != "default":
+                longitude = input("Enter the longitude of the resort (enter N/A if unknown or 'default' for the longitude of Val Thorens): ")
         else:
             snow_conditions = "unknown"
             weather = "unknown"
@@ -247,8 +247,11 @@ class Terminal(Ui):
         valid = None
         while valid == None:
             start_time = input("At what time do you want to start your route (hh:mm): ")
-            if int(start_time[start_time.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
-                valid = True
+            try:
+                if int(start_time[start_time.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
+                    valid = True
+            except:
+                print("Error. The start time of the route must be in the format hh:mm.")
         route_start_time = start_time
         route_stop_time = self.__add_times(start_time, length)
 
@@ -283,16 +286,19 @@ class Terminal(Ui):
                 valid = None
                 while valid == None:
                     break_time = input("At what time do you want to visit this amenity (hh:mm): ")
-                    if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
-                        if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
-                            if self.__compare_greater(break_time, previous_time):
-                                previous_time = break_time
-                                valid = True
+                    try:
+                        if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
+                            if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
+                                if self.__compare_greater(break_time, previous_time):
+                                    previous_time = break_time
+                                    valid = True
+                                else:
+                                    print("Error. The time that you want to visit this amenity at must be after the time that you visited the previous amenity at.")
                             else:
-                                print("Error. The time that you want to visit this amenity at must be after the time that you visited the previous amenity at.")
+                                print("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
                         else:
-                            print("Error. The time that you want to visit this amenity at must be after the start time of the route and before the end time.")
-                    else:
+                            print("Error. The time that you want to visit this amenity at must be in the format hh:mm.")
+                    except:
                         print("Error. The time that you want to visit this amenity at must be in the format hh:mm.")
 
                 if break_type == "restaurant/amenity":
@@ -450,17 +456,23 @@ class Terminal(Ui):
                     valid = False
                     while not valid:
                         opening = input("Enter the opening time of the run (hh:mm): ")
-                        if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
-                            valid = True
+                        try:
+                            if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                valid = True
+                        except:
+                            print("Error. The opening time must be in the format hh:mm.")
                     closing = ""
                     valid = False
                     while not valid:
                         closing = input("Enter the closing time of the run (hh:mm): ")
-                        if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
-                            if self.__compare_greater(closing, opening):
-                                valid = True
-                            else:
-                                print("Error. The closing time must be after the opening time.")
+                        try:
+                            if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                if self.__compare_greater(closing, opening):
+                                    valid = True
+                                else:
+                                    print("Error. The closing time must be after the opening time.")
+                        except:
+                            print("Error. The closing time must be in the format hh:mm.")
                     lift = ""
                     while lift not in ["l","r"]:
                         lift = input("Is this a lift or a run ('l' or 'r'): ")
@@ -514,17 +526,23 @@ class Terminal(Ui):
                             valid = False
                             while not valid:
                                 opening = input("Enter the opening time of the run (hh:mm): ")
-                                if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
-                                    valid = True
+                                try:
+                                    if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                        valid = True
+                                except:
+                                    print("Error. The opening time must be in the format hh:mm.")
                             closing = ""
                             valid = False
                             while not valid:
                                 closing = input("Enter the closing time of the run (hh:mm): ")
-                                if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
-                                    if self.__compare_greater(closing, opening):
-                                        valid = True
-                                    else:
-                                        print("Error. The closing time must be after the opening time.")
+                                try:
+                                    if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                        if self.__compare_greater(closing, opening):
+                                            valid = True
+                                        else:
+                                            print("Error. The closing time must be after the opening time.")
+                                except:
+                                    print("Error. The closing time must be in the format hh:mm.")
                             lift = ""
                             while lift not in ["l","r"]:
                                 lift = input("Is this a lift or a run ('l' or 'r'): ")
@@ -648,17 +666,23 @@ class Terminal(Ui):
                         valid = False
                         while not valid:
                             opening = input("Enter the opening time of the run (hh:mm): ")
-                            if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
-                                valid = True
+                            try:
+                                if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                    valid = True
+                            except:
+                                print("Error. The opening time must be in the format hh:mm.")
                         closing = ""
                         valid = False
                         while not valid:
                             closing = input("Enter the closing time of the run (hh:mm): ")
-                            if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
-                                if self.__compare_greater(closing, opening):
-                                    valid = True
-                                else:
-                                    print("Error. The closing time must be after the opening time.")
+                            try:
+                                if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                    if self.__compare_greater(closing, opening):
+                                        valid = True
+                                    else:
+                                        print("Error. The closing time must be after the opening time.")
+                            except:
+                                print("Error. The closing time must be in the format hh:mm.")
                         lift = ""
                         while lift not in ["l","r"]:
                             lift = input("Is this a lift or a run ('l' or 'r'): ")
@@ -722,17 +746,23 @@ class Terminal(Ui):
                             valid = False
                             while not valid:
                                 opening = input("Enter the opening time of the run (hh:mm): ")
-                                if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
-                                    valid = True
+                                try:
+                                    if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                        valid = True
+                                except:
+                                    print("Error. The opening time must be in the format hh:mm.")
                             closing = ""
                             valid = False
                             while not valid:
                                 closing = input("Enter the closing time of the run (hh:mm): ")
-                                if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
-                                    if self.__compare_greater(closing, opening):
-                                        valid = True
-                                    else:
-                                        print("Error. The closing time must be after the opening time.")
+                                try:
+                                    if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                        if self.__compare_greater(closing, opening):
+                                            valid = True
+                                        else:
+                                            print("Error. The closing time must be after the opening time.")
+                                except:
+                                    print("Error. The closing time must be in the format hh:mm.")
                             lift = ""
                             while lift not in ["l","r"]:
                                 lift = input("Is this a lift or a run ('l' or 'r'): ")
@@ -814,8 +844,11 @@ class Terminal(Ui):
                                 valid = False
                                 while not valid:
                                     opening = input("Enter the opening time of the run (hh:mm): ")
-                                    if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
-                                        valid = True
+                                    try:
+                                        if int(opening[opening.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', opening):
+                                            valid = True
+                                    except:
+                                        print("Error. The opening time must be in the format hh:mm.")
                                 modify_run = "UPDATE runs SET opening=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [opening, node_id, end_node_id])
                             elif modify3_option == "3":
@@ -823,11 +856,14 @@ class Terminal(Ui):
                                 valid = False
                                 while not valid:
                                     closing = input("Enter the closing time of the run (hh:mm): ")
-                                    if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
-                                        if self.__compare_greater(closing, opening):
-                                            valid = True
-                                        else:
-                                            print("Error. The closing time must be after the opening time.")
+                                    try:
+                                        if int(closing[closing.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', closing):
+                                            if self.__compare_greater(closing, opening):
+                                                valid = True
+                                            else:
+                                                print("Error. The closing time must be after the opening time.")
+                                    except:
+                                        print("Error. The closing time must be in the format hh:mm.")
                                 modify_run = "UPDATE runs SET closing=? WHERE node_id=? AND end_node_id=?;"
                                 cursor.execute(modify_run, [closing, node_id, end_node_id])
                             elif modify3_option == "4":

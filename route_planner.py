@@ -8,7 +8,6 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ALTITUDE_MULTIPLIER = 1000
     REPETITION_MULTIPLIER = 100
     LIFT_TYPE_MULTIPLIER = 1
-    URL_WEATHER = "https://api.tomorrow.io/v4/weather/forecast?location=45.1753%2C%206.3448&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
     def __init__(self,ski_resort,start,length,start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude): #Initialisation
         self.__ski_resort_object = ski_resort
         self.__ski_resort = ski_resort.nodes
@@ -21,12 +20,15 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         self.__length = length
         self.__ski_resort_object.time = start_time
         self.__ski_resort_object.check_open()
-        if latitude != "N/A" and longitude != "N/A":
+        if latitude == "N/A" and longitude == "N/A":
             self.__previous_snow = "N/A"
             self.__current_snow = "N/A"
             self.__temperature = "N/A"
-        else: #If the latitude and longitude are not provided, the weather at the default location of Val Thorens is used
-            self.__url_weather = Plan_route.URL_WEATHER
+        elif latitude == "default" and longitude == "default":
+            self.__url_weather = "https://api.tomorrow.io/v4/weather/forecast?location=45.1753%2C%206.3448&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
+            self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
+        else:
+            self.__url_weather = f"https://api.tomorrow.io/v4/weather/forecast?location={latitude}%2C%20{longitude}&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
             self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
     
     def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2
@@ -214,6 +216,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             previous_snow = weather_data["timelines"]["daily"][day_index-1]["values"]["snowIntensityMax"] #parsing the JSON data
             current_snow = weather_data["timelines"]["daily"][day_index]["values"]["snowIntensityMax"]
             temperature = weather_data["timelines"]["daily"][day_index]["values"]["temperatureAvg"]
+            print(temperature, current_snow) ####
         else:
             previous_snow = "N/A"
             current_snow = "N/A"

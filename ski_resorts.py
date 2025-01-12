@@ -169,7 +169,7 @@ class Node(): #A node object which can be a ski lift station, ski park or amenit
         return self.__node_type
     
     @property
-    def length(self): #Getter for length
+    def length(self): #Getter for length - allows polymorphism where this getter is only called if the inherited class does not have a length getter method itself
         return self.__length
     
     @property
