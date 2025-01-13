@@ -2,13 +2,15 @@ from math import inf
 import random
 import requests
 from ski_resorts import Ski_resorts, Ski_resort, Node, Ski_node, Run
+#Deals with the generation of a route through a ski resort.
 
 class Plan_route(): #Plan_route class is used to create a viable route through a ski resort
     DIFFICULTY_MULTIPLIER = 10000
     ALTITUDE_MULTIPLIER = 1000
     REPETITION_MULTIPLIER = 100
     LIFT_TYPE_MULTIPLIER = 1
-    def __init__(self,ski_resort,start,length,start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude): #Initialisation
+    def __init__(self,ski_resort,start,length,start_time, max_difficulty, snow_conditions, lift_type_preference, weather, latitude, longitude): 
+        #Initialises the attributes setting the time attribute for the ski resort to the starting time of the route and creating a suitable URL for the API call. Parameters: None. Return values: None.
         self.__ski_resort_object = ski_resort
         self.__ski_resort = ski_resort.nodes
         self.__start = start
@@ -31,7 +33,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             self.__url_weather = f"https://api.tomorrow.io/v4/weather/forecast?location={latitude}%2C%20{longitude}&timesteps=1d&units=metric&apikey=tXd5I8WP449Un0EQqtPzXgJUfhJTVZos"
             self.__previous_snow, self.__current_snow, self.__temperature = self.__get_weather(self.__weather)
     
-    def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2
+    def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2 where both times are in hh:mm format. Parameters: t1 – String, t2 – String. Return values: Boolean.
         h1, m1 = t1.split(":")
         h2, m2 = t2.split(":")
         if int(h1) > int(h2):
@@ -41,7 +43,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         else:
             return False
     
-    def __compare_greater_or_equal(self,t1,t2): #Compares if time t1 is greater than or equal to time t2
+    def __compare_greater_or_equal(self,t1,t2): #Compares if time t1 is greater than or equal to time t2 where both times are in hh:mm format. Parameters: t1 – String, t2 – String. Return values: Boolean.
         h1, m1 = t1.split(":")
         h2, m2 = t2.split(":")
         if int(h1) > int(h2):
@@ -51,7 +53,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         else:
             return False
     
-    def __add_times(self, t1, t2): #Adds two times together where t1 is in the format hh:mm and t2 is an integer number of minutes
+    def __add_times(self, t1, t2): #Adds a time t1 in hh:mm format to an integer number of minutes t2. Parameters: t1 – String, t2 – Integer. Return values: time - String.
         h1, m1 = t1.split(":")
         m2 = t2
         mins = int(m1) + int(m2)
@@ -68,7 +70,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     #######################################################
     # GROUP A Skill: Graph traversal (Dijkstra’s algorithm)
     #######################################################
-    def __dijkstras_traversal(self,start,time_independent): #Dijkstra's algorithm to find the shortest path from a node in the graph to all of the other nodes
+    def __dijkstras_traversal(self,start,time_independent): #Dijkstra's algorithm to find the shortest path from a node in the graph to all of the other nodes.
+        #Parameters: start (the node at which the traversal begins) - String, time_independent – Boolean. Return values: distances – list, previous_node - list.
         node_number = self.__ski_resort_object.node_number()
         queue = Priority_queue(node_number)
         keys = (self.__ski_resort.keys())
@@ -103,7 +106,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         return distances, previous_node
     
-    def __min_and_max_altitudes(self): #Finds the minimum and maximum altitudes of the ski resort
+    def __min_and_max_altitudes(self): #Finds the minimum and maximum altitude of all the nodes in the ski resort. Parameters: None. Return values: min_altitdue – integer, max_altitude – integer.
         min_altitude = inf
         max_altitude = -inf
         for node in self.__ski_resort.values():
@@ -113,7 +116,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
                 max_altitude = node.altitude
         return min_altitude, max_altitude
 
-    def __generate_values(self, start_node, end_node): #Generates the value of a run based on its difficulty, altitude, number of repetitions and lift type preference - receives a node object and a run object as parameters
+    def __generate_values(self, start_node, end_node): #Generates the value of a run based on its difficulty, altitude depending on weather, number of repetitions and lift type preference.
+        #Their importance is weighted in the same order which they are previously given with the difficulty the most important feature. Parameters: start_node – Object, end_node – Object. Return values: value – integer.
         value = 0
         #difficulty score
         if self.__max_difficulty == "black":
@@ -199,7 +203,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ######################################################################################################
     # GROUP B Skill: Calling web service APIs and parsing JSON/XML to service a simple client-server model
     ######################################################################################################
-    def __get_weather(self, date): #Gets the weather for the ski resort
+    def __get_weather(self, date): #Gets the weather for the ski resort from the API ‘www.tomorrow.io/weather-api/’  using the input coordinates of the ski resort.
+        #Parameters: date – string. Return values: previous_snow – float, current_snow – float, temperature – float.
         day_index = 0
         if date == "today":
             day_index = 1
@@ -226,7 +231,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
-    def __two_move_route(self,original_chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time): #Finds the highest value sequence of two moves and completes them
+    def __two_move_route(self,original_chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time): #Finds the highest value sequence of two moves and completes them if the value is greater than or equal to 0.
+        #Parameters: original_chosen_node – Object, adjacent_nodes - List, time_elapsed - Integer, route – List of dictionaries, as_close_to_time – Boolean. Return values: route – List of dictionaries, change - Boolean, time_elapsed - Integer, original_chosen_node – Object.
         change = False
         priorities_for_double = []
         for node in adjacent_nodes: #Iterate throught the adjacent nodes to calculate the values for each possible two move sequence
@@ -309,7 +315,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         return route, change, time_elapsed, original_chosen_node
     
-    def __one_move_route(self,original_chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time): #Finds the highest value move and completes it
+    def __one_move_route(self,original_chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time): #Finds the highest value single move and completes it if its value is greater than or equal to 0.
+        #Parameters: original_chosen_node – Object, adjacent_nodes - List, time_elapsed - Integer, route – List of dictionaries, as_close_to_time – Boolean. Return values: route – List of dictionaries, change - Boolean, time_elapsed - Integer, original_chosen_node – Object.
         change = False
         priorities = []
         for node in adjacent_nodes: #Iterate through the adjacent nodes to calculate the values for each possible move
@@ -352,7 +359,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 
         return route, change, time_elapsed, original_chosen_node
     
-    def __pause_route(self,time_elapsed,route,chosen_node): #Pauses the route for 1 minute
+    def __pause_route(self,time_elapsed,route,chosen_node): #Pauses the route for one minute. Parameters: time_elapsed - Integer, route - List, chosen_node – Object. Return Values: time_elapsed - Integer, route – List.
         time_elapsed += 1
         self.__ski_resort_object.increment_time(1)
         if route[-1]["pause"] == False:
@@ -364,7 +371,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
-    def __best_way_back(self,route,time_elapsed,chosen_node,as_close_to_time,adjacent_nodes): #Used when there are no viable sequences of three moves. Determines a route which tries to return to the starting node
+    def __best_way_back(self,route,time_elapsed,chosen_node,as_close_to_time,adjacent_nodes): #Used when there are no viable sequences of three moves through the ski resort. Determines a route which tries to return as far back to the starting node as possible.
+        #Parameters: route – List, time_elapsed - Integer, chosen_node - object, as_close_to_time - Boolean, adjacent_nodes – List. Return values: route – List.
         #If as_close_to_time is False, the route will return to the starting node ensuring it reaches it before the specified length of route is reached
         #If as_close_to_time is True, the route will return to the starting node but will try to end the route at a time close to the specified length of route meaning it could be longer than the specified length
         route, change_two, time_elapsed, chosen_node = self.__two_move_route(chosen_node,adjacent_nodes,time_elapsed,route,as_close_to_time)
@@ -399,7 +407,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
-    def __should_route_continue(self,adjacent_nodes): #Determines if there is a 3 move route that will be able to be taken in the future
+    def __should_route_continue(self,adjacent_nodes): #Determines if there is a 3 move route that will be able to be taken in the future when there is not currently one possible. Parameters: adjacent_nodes – List. Return values: continue_route – Boolean.
         continue_route = False
         for run in adjacent_nodes: #Iterating through the adjacent nodes to see if there are three nodes in a sequence that are all either open or will be open in the future
             if self.__compare_greater(run.opening, self.__ski_resort_object.time) or (self.__compare_greater_or_equal(self.__ski_resort_object.time, run.opening) and self.__compare_greater(run.closing, self.__ski_resort_object.time)):
@@ -428,7 +436,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ###############################################
     # GROUP B Skill: Simple user defined algorithms
     ###############################################
-    def __complete_move(self,priorities,adjacent_nodes,time_elapsed,route,original_chosen_node): #Completes the first move of the sequence of three moves which had the highest value
+    def __complete_move(self,priorities,adjacent_nodes,time_elapsed,route,original_chosen_node): #A procedure which completes the first move of the sequence of three moves which was determined to have the highest value.
+        #Parameters: priorities - List, adjacent_nodes - List, time_elapsed - Integer, route – List. Return values: chosen_node - Object, time_elapsed - Integer, route – List.
         if priorities.count(max(priorities)) == 1:
             chosen_node = adjacent_nodes[priorities.index(max(priorities))]
         else: #randomly choose between the nodes with the same priority
@@ -459,7 +468,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ###############################################
     # GROUP B Skill: Simple user defined algorithms
     ###############################################
-    def __fastest_route_back(self, chosen_node,time_elapsed,route): #Determines the fastest route back to the starting node from the current node
+    def __fastest_route_back(self, chosen_node,time_elapsed,route): #Determines the fastest route back to the starting node from the current node using a Dijkstra’s graph traversal.
+        #Parameters: chosen_node – Object ,time_elapsed - Integer, route – List. Return values: temp_route – List.
         temp_route = route.copy()
         times,previous_node = self.__dijkstras_traversal(chosen_node.name, False)
                 
@@ -488,7 +498,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     #####################################
     # GROUP A Skill: Recursive algorithms
     #####################################
-    def __find_values(self,adjacent_nodes,count,temp_time_elapsed, priorities, value, values, ignore_way_home, previous_node): #A recursive function to find the values of the possible routes from the current node
+    def __find_values(self,adjacent_nodes,count,temp_time_elapsed, priorities, value, values, ignore_way_home, previous_node): #A recursive function to find the values of all of the possible sequences of three moves from the current node and determine which one has the maximum value. 
+        #Parameters: adjacent_nodes - List, count - Integer, temp_time_elapsed - Integer, priorities - List, value - Integer, values - List, ignore_way_home – Boolean. Return values: priorities - List, values - List, count – Integer.
         if count >= 2: #base case determining the search depth through the graph
             for node_1 in adjacent_nodes:
                 temp_time_elapsed += node_1.length
@@ -530,7 +541,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
-    def get_route(self, as_close_to_time, route, start, time_elapsed): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node
+    def get_route(self, as_close_to_time, route, start, time_elapsed): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node.
+        #Parameters: as_close_to_time – Boolean. Return values: route – List of dictionaries, returned_to_start – Boolean.
         complete = False
         chosen_node = self.__ski_resort[start]
         returned_to_start = True
@@ -603,7 +615,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
 # GROUP A Skill: Priority queue
 ###############################
 class Priority_queue(): #Implementation of a circular, priority queue using a static array
-    def __init__(self,n):
+    def __init__(self,n): #Initialises the length of the queue in memory. Parameters: n – integer. Return values: None.
         self.__max_length = int((0.5*n**2)-(1.5*n)+2) #The maximum length of the queue that the Dijkstra's algorithm could require if the graph is fully connected 
         self.__queue = [(0,"") for i in range(int(self.__max_length))] #The memory used to store the queue is allocated when the priority queue is initialised
         self.__front = 0
@@ -613,7 +625,7 @@ class Priority_queue(): #Implementation of a circular, priority queue using a st
     #################################
     # GROUP A Skill: Queue operations
     #################################
-    def enQueue(self,item): #Adds an item to the rear of the queue where an item is a tuple of (distance,node name)
+    def enQueue(self,item): #Adds an item to the rear of the queue where an item is a tuple of (distance, node name). Parameters: item – Tuple. Return values: None
         if self.isFull():
             print("Queue is full")
         self.__rear = int((self.__rear + 1) % self.__max_length)
@@ -625,7 +637,7 @@ class Priority_queue(): #Implementation of a circular, priority queue using a st
             self.__queue[counter],self.__queue[counter-1] = self.__queue[counter-1],self.__queue[counter]
             counter = int((counter-1)%self.__max_length)
 
-    def deQueue(self): #Pops the front of the queue
+    def deQueue(self): #Pops the front of the queue. Parameters: None. Return values: None.
         if self.isEmpty():
             print("Queue is empty")
             return None
@@ -634,8 +646,8 @@ class Priority_queue(): #Implementation of a circular, priority queue using a st
         self.__size -= 1
         return data_item
     
-    def isEmpty(self): #Checks if the queue is empty
+    def isEmpty(self): #Checks if the queue is empty. Parameters: None. Return values: None.
         return self.__size == 0
     
-    def isFull(self): #Checks if the queue is full
+    def isFull(self): #Checks if the queue is full. Parameters: None. Return values: None.
         return self.__size == self.__max_length

@@ -1,26 +1,27 @@
 from math import inf
 import math
 from abc import ABC, abstractmethod
+#Defines the classes that make up the ski resort graph structure.
 
 ######################################################################################################################################################
 # GROUP A Skill: Complex user-defined use of a object-orientated programming model e.g. classes, inheritance, composition, polymorphism and interfaces
 ######################################################################################################################################################
-class Ski_resorts(): #Class to store all of the ski resorts
-    def __init__(self):
+class Ski_resorts(): #The object at the top of the graph hierarchy which stores a dictionary of key resort name and value the corresponding resort object.
+    def __init__(self): #Initialises the resorts dictionary. Parameters: None. Return values: None.
         #############################
         # GROUP B Skill: Dictionaries
         #############################
         self.__resorts = {}
     
-    def add_resort(self,name): #Adds a ski resort to the collection of ski resorts
+    def add_resort(self,name): #Adds a resort with a given name to the resorts dictionary. Parameters: name – String. Return values: None
         self.__resorts[name] = Ski_resort(name)
     
     @property
-    def resorts(self): #Getter for resorts
+    def resorts(self): #The resorts dictionary getter method. Parameters: None. Return values: nodes – Dictionary
         return self.__resorts
 
 class Ski_resort(): #A ski resort object with a collection of nodes
-    def __init__(self,name):
+    def __init__(self,name): #Initialises the attributes required including a nodes dictionary with keys of node names and values of the corresponding node object. Parameters: None. Return values: None.
         self.__name = name
         self.__nodes = {}
         self.__time = "00:00"
@@ -68,7 +69,8 @@ class Ski_resort(): #A ski resort object with a collection of nodes
     ###############################################
     # GROUP B Skill: Simple user defined algorithms
     ###############################################
-    def increment_time(self,mins): #Increments the time by a number of minutes
+    def increment_time(self,mins): #Adds a time in minutes to the time attribute of ‘Ski_resort’ in ‘hh:mm’ format. 
+        #Since the time has changed, ‘check_open’ is called to check if any runs have closed. Parameters: mins – Integer. Return values: None.
         if mins > 0 and mins != inf:
             h1, m1 = self.__time.split(":")
             mins = int(m1) + mins
@@ -86,7 +88,8 @@ class Ski_resort(): #A ski resort object with a collection of nodes
     ###############################################
     # GROUP B Skill: Simple user defined algorithms
     ###############################################
-    def decrement_time(self,mins): #Decrements the time by a number of minutes
+    def decrement_time(self,mins): #Minuses a time in minutes from the time attribute of ‘Ski_resort’ in ‘hh:mm’ format.
+        #Since the time has changed, ‘check_open’ is called to check if any runs have closed. Parameters: mins – Integer. Return values: None.
         if mins > 0 and mins != inf:
             h1, m1 = self.__time.split(":")
             hours = int(h1) - math.ceil((mins-int(m1)) / 60)
@@ -102,7 +105,7 @@ class Ski_resort(): #A ski resort object with a collection of nodes
             self.__time = f"{hours}:{mins}"
             self.check_open()
     
-    def compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2 both in the format hh:mm
+    def compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2 where both times are in ‘hh:mm’ format. Parameters: t1 – String, t2 – String. Return values: Boolean.
         #Is time t1 greater than time t2
         h1, m1 = t1.split(":")
         h2, m2 = t2.split(":")
@@ -113,7 +116,7 @@ class Ski_resort(): #A ski resort object with a collection of nodes
         else:
             return False
     
-    def compare_greater_or_equal(self,t1,t2): #Compares if time t1 is greater than or equal to time t2 both in the format hh:mm
+    def compare_greater_or_equal(self,t1,t2): #Compares if time t1 is greater than or equal to time t2 where both times are in ‘hh:mm’ format. Parameters: t1 – String, t2 – String. Return values: Boolean.
         #Is time t1 greater than or equal to time t2
         h1, m1 = t1.split(":")
         h2, m2 = t2.split(":")
@@ -124,7 +127,8 @@ class Ski_resort(): #A ski resort object with a collection of nodes
         else:
             return False
     
-    def check_open(self): #Checks if the runs in the ski resort are open at the current time
+    def check_open(self): #Determines if any of the runs would be closed at the time given by the attribute ‘time’ and changes their run length to infinity if they are closed.
+        #If they aren’t closed, their length is returned to its open length. Parameters: None. Return values: None.
         for lift in self.__nodes.values():
             for run in lift.runs:
                 if self.compare_greater(run.opening, self.__time) or self.compare_greater_or_equal(self.__time, run.closing):
@@ -132,8 +136,8 @@ class Ski_resort(): #A ski resort object with a collection of nodes
                 else:
                     run.length = run.open_length
   
-class Node(): #A node object which can be a ski lift station, ski park or amenity
-    def __init__(self,name, altitude):
+class Node(): #The general node class from which ‘Ski_node’, ‘Ski_park’ and ‘Amenity’ are inherited.
+    def __init__(self,name, altitude): #Initialises the attributes including the list ‘runs’ which stores all of the run objects for the node. Parameters: name – String, altitude – Integer. Return values: None.
         self._name = name
         self._altitude = altitude
         self.__runs = []
@@ -141,7 +145,7 @@ class Node(): #A node object which can be a ski lift station, ski park or amenit
         self.__length = 0
         self.__amenity_type = "None"
 
-    def add_run(self,name,length,opening,closing,lift,difficulty,lift_type): #Adds a run to the node
+    def add_run(self,name,length,opening,closing,lift,difficulty,lift_type): #Appends a run object to the list ‘runs’. Parameters: name – String, length – Integer, opening – String, closing – String, lift – Boolean, difficulty – String, lift_type – String. Return values: None.
         self.__runs.append(Run(name,length,opening,closing,lift,difficulty,lift_type))
     
     @property
@@ -169,7 +173,7 @@ class Node(): #A node object which can be a ski lift station, ski park or amenit
         return self.__node_type
     
     @property
-    def length(self): #Getter for length - allows polymorphism where this getter is only called if the inherited class does not have a length getter method itself
+    def length(self): #Length getter method. Allows the polymorphism of objects where this getter is only called if the inherited class does not have a length getter method itself. Parameters: None. Return values: length – Integer.
         return self.__length
     
     @property
@@ -177,19 +181,19 @@ class Node(): #A node object which can be a ski lift station, ski park or amenit
         return self.__amenity_type
 
 class Ski_node(Node): #A ski lift station node inherited from the node class
-    def __init__(self,name,altitude):
+    def __init__(self,name,altitude): #Initialises the attributes from the parent class. Parameters: name – String, altitude – Integer. Return values: None.
         super().__init__(name,altitude)
         self.__node_type = "Ski lift station"
     
-    def __repr__(self): #Prints a description of the ski lift station
+    def __repr__(self): #Prints a description of the ski lift station. Parameters: None. Return values: None.
         return f"Ski node '{self._name}' - Altitude: {self._altitude}m"
     
     @property
-    def node_type(self): #Getter for node type
+    def node_type(self): #Node_type getter method. This method is used instead of the inherited one of the same name if it is called by a ski_node. Parameters: None. Return values: node_type – String.
         return self.__node_type
     
-class Run(): #A run object
-    def __init__(self,name,length,opening,closing,lift,difficulty,lift_type):
+class Run(): #The lowest object in the graph data structure hierarchy.
+    def __init__(self,name,length,opening,closing,lift,difficulty,lift_type): #Initialises the attributes. Parameters: name – String, length – Integer, opening – String, closing – String, lift – Boolean, difficulty – String, lift_type – String. Return values: None.
         self._name = name
         self._length = length
         self._open_length = length
@@ -236,7 +240,7 @@ class Run(): #A run object
         return self._lift_type
 
 class Ski_park(Node): #A ski park node inherited from the node class
-    def __init__(self,name,altitude, length):
+    def __init__(self,name,altitude, length): #Initialises the attributes from the parent class. Parameters: name – String, altitude – Integer. Return values: None.
         super().__init__(name,altitude)
         self.__length = length
         self.__node_type = "Ski park"
@@ -253,12 +257,12 @@ class Ski_park(Node): #A ski park node inherited from the node class
         return self.__node_type
 
 class Amenity(Node): #An amenity node inherited from the node class
-    def __init__(self,name,altitude, amenity_type):
+    def __init__(self,name,altitude, amenity_type): #Initialises the attributes from the parent class. Parameters: name – String, altitude – Integer. Return values: None.
         super().__init__(name,altitude)
         self.__amenity_type = amenity_type
         self.__node_type = "Amenity"
     
-    def __repr__(self): #Prints a description of the amenity
+    def __repr__(self): #Prints a description of the amenity. Parameters: None. Return values: None.
         return f"{self.__amenity_type}"
     
     @property

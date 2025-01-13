@@ -1,16 +1,16 @@
 import networkx as nx 
 import matplotlib.pyplot as plt
  
-class Display_graph():
+class Display_graph(): #Allows a ski resort graph to be displayed with the matplotlib library
    
-    def __init__(self): #Initialises the edges list
+    def __init__(self): #Initialises the class. Parameters: None. Return values: None.
         self.__edges = []
 
-    def __add_edge(self, x, y, z): #Adds an edge between nodes x and y
+    def __add_edge(self, x, y, z): #Adds an edge between nodes x and y. Parameters: x – String, y – String, z - dictionary. Return values: None.
         edge = (x, y, z)
         self.__edges.append(edge)
 
-    def __visualise(self, ski_resort_object): #Creates a visual graph from a set of edges
+    def __visualise(self, ski_resort_object): #Displays a graph visually from a set of edges. Parameters: None. Return values: None.
         G = nx.DiGraph()
         G.add_edges_from(self.__edges)
         colours_list = []
@@ -35,7 +35,7 @@ class Display_graph():
             data["alpha"] = 0.5
         plt.show()
 
-    def display_ski_resort(self,ski_resort_object): #Formats the ski resort object into a set of edges that can be displayed
+    def display_ski_resort(self,ski_resort_object): #Formats the ski resort object into a set of edges that can be displayed. Parameters: ski_resort_object - Object. Return values: None.
         for node in ski_resort_object.nodes.values():
             for run in node.runs:
                 if run.lift:

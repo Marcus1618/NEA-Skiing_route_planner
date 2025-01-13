@@ -7,10 +7,11 @@ from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 from display_graph import Display_graph
 from database_changes import sync_from_database, add_resort_to_database
 from file_changes import view_previous_route, save_route, get_route_names
+#Implements the terminal based user interface and  allows the user to interact with the program
 
-class Terminal(Ui):
+class Terminal(Ui): #The object with which the user interacts with the program inherited from ‘Ui’
     DATABASE_NAME = "ski_resorts.db"
-    def __init__(self):
+    def __init__(self): #Initialises the database creating the tables if they are not already created and creating the graph structure. Parameters: None. Return values: None.
         self.__saved_ski_resorts = Ski_resorts()
         self.__construct_example_ski_resort()
         ###############################################
@@ -45,7 +46,8 @@ class Terminal(Ui):
         except sqlite3.OperationalError as e:
             print("Failed to open database: ", e)
 
-    def menu(self): #Allows one of seven options that the program allows to be selected
+    def menu(self): #prints the options of different features which the program can run and receives an input for which one to proceed with. There is also the option to exit the program.
+        #A ‘Display_graph’ object is also created if option 4 is selected allowing the graph to be displayed. Parameters: None. Return values: None.
         option = "-1"
         print("""
         Menu:
@@ -126,7 +128,7 @@ class Terminal(Ui):
         elif option == "7":
             quit()
 
-    def __add_times(self, t1, t2): #Adds two times together where t1 is in the format hh:mm and t2 is just an integer number of minutes
+    def __add_times(self, t1, t2): #Adds two times together where t1 is in the format hh:mm and t2 is an integer number of minutes. Parameters: t1 - String, t2 – Integer. Return values: ‘hh:mm’ – String.
         h1, m1 = t1.split(":")
         m2 = t2
         mins = int(m1) + int(m2)
@@ -140,7 +142,7 @@ class Terminal(Ui):
             mins = f"0{mins}"
         return f"{hours}:{mins}"
     
-    def __compare_greater(self,t1,t2): #Compares if time t1 is greater than time t2
+    def __compare_greater(self,t1,t2): #Compares if a time t1 is greater than the time t2. Parameters: t1 – String, t2 – Sting. Return values: Boolean.
         h1, m1 = t1.split(":")
         h2, m2 = t2.split(":")
         if int(h1) > int(h2):
@@ -150,12 +152,12 @@ class Terminal(Ui):
         else:
             return False
     
-    def __time_difference(self, t1, t2): #Returns the difference between two times where t1 and t2 are in the format hh:mm
+    def __time_difference(self, t1, t2): #Returns the difference between two times t1 and t2 where t1 and t2 are in the format hh:mm. Parameters: t1 – String, t2 – Sting. Return values: Integer.
         h1, m1 = t1.split(":")
         h2, m2 = t2.split(":")
         return (int(h2)*60 + int(m2)) - (int(h1)*60 + int(m1))
     
-    def __construct_example_ski_resort(self): #Creates an example ski resort with ski lift stations and runs - only stored locally in the program
+    def __construct_example_ski_resort(self): #Creates an example ski resort ‘Val Thorens’ with nodes and runs which can be used for testing. It is only stored locally within the graph data structure. Parameters: None. Return values: None.
         ######################
         # GROUP A Skill: Graph
         ######################
@@ -181,7 +183,8 @@ class Terminal(Ui):
         self.__saved_ski_resorts.resorts["Val Thorens"].add_ski_park("Snow park 1", 2400, 4)
         self.__saved_ski_resorts.resorts["Val Thorens"].nodes["Snow park 1"].add_run("Plein Sud bottom", 10, "00:00", "23:59", 0, "blue", "None")
 
-    def __advanced_options(self): #Allows the user to input advanced options for the route generation
+    def __advanced_options(self): #Allows the user to input advanced options for the route generation relating to the desired punctuality of the end time of the route, the snow conditions and weather and the ski lift type preference.
+        #Parameters: None. Return values: as_close_to_time – Boolean, snow_conditions – String, lift_type_preference – String, weather – String, latitude – String, longitude – String.
         weather = ""
         as_close_to_time = ""
         snow_conditions = ""
@@ -217,7 +220,7 @@ class Terminal(Ui):
 
         return as_close_to_time, snow_conditions, lift_type_preference, weather, latitude, longitude
 
-    def __generate_route(self): #Creates a route through a ski resort dependent on various user parameters
+    def __generate_route(self): #Receives and validates the inputs required to create a route through a ski resort. This includes how long the user wants to ski for, what resort they are in and what lift station they want to start their route from. Parameters: None. Return values: None.
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
         self.__construct_example_ski_resort()
@@ -399,7 +402,8 @@ class Terminal(Ui):
     ################################################################################################
     # GROUP A Skill: Dynamic generation of objects based on complex user-defined use of an OOP model
     ################################################################################################
-    def __create_ski_resort(self): #Allows the user to create a ski resort through terminal inputs and displays it once created
+    def __create_ski_resort(self): #Receives and validates the inputs required to create a new ski resort. This includes receiving the name of the ski resort, the name of all nodes and the information required to create each run from each node. 
+        #The subprogram must then check that no nodes were used as end points of runs without being defined as a node and if they were, the user should be forced to create them. The newly created ski resort is then displayed. Parameters: None. Return values: None.
         self.__saved_ski_resorts = Ski_resorts() #overwrite the locally stored ski resorts
         self.__saved_ski_resorts = sync_from_database(self.__saved_ski_resorts) #Sync the ski resorts stored in the database with the ski resorts stored in the program
         self.__construct_example_ski_resort()
@@ -581,7 +585,8 @@ class Terminal(Ui):
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
-    def __modify_ski_resort(self): #Allows the user to modify an existing run, add a new run or lift or add a new node
+    def __modify_ski_resort(self): #This method allows a user to modify a pre-existing ski resort in the database through terminal inputs.
+        #They are able to modify information about a pre-existing run, add a new node or add a new run. Parameters: None. Return values: None.
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
@@ -896,7 +901,7 @@ class Terminal(Ui):
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
     ##############################################
-    def __delete_ski_resort(self): #Allows the user to delete a ski resort and all of its associated ski lift stations, runs and amenities
+    def __delete_ski_resort(self): #This method allows a user to specify a ski resort to be deleted from the database. The input is first validated before the ski resort is deleted. Parameters: None. Return values: None.
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()

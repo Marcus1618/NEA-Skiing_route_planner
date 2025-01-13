@@ -1,8 +1,9 @@
 from Terminal import Terminal
 from GUI import Gui
 from sys import argv
+#Determines if the program will run in the terminal or in a GUI and begins the program
 
-def usage(): #Prints the instructions on how to use the program to the terminal 
+def usage(): #Prints the instructions of how to start the program into the terminal. Parameters: None. Return values: None.
     print(f"""
 Usage: {argv[0]} [g | t]
 g : run in the GUI

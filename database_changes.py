@@ -1,12 +1,13 @@
 import sqlite3
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
+#Allows new ski resorts to be added to the database and for the database to be synced with the local graph data structure
 
 DATABASE_NAME = "ski_resorts.db"
 
 ##############################################
 # GROUP A Skill: Cross-table parameterised SQL
 ##############################################
-def add_resort_to_database(ski_resort_object, new_resort_name): #Adds a newly created ski resort into the database
+def add_resort_to_database(ski_resort_object, new_resort_name): #Adds a newly created ski resort to the database from its graph format. Parameters: ski_resort_object – Object, new_resort_name - String. Return values: None.
     try:
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()
@@ -29,7 +30,8 @@ def add_resort_to_database(ski_resort_object, new_resort_name): #Adds a newly cr
     except sqlite3.OperationalError as e:
         print("Failed to open database: ", e)
 
-def sync_from_database(ski_resort_object): #Copies the ski resorts from the database to a local data structure of the ski resorts as objects
+def sync_from_database(ski_resort_object): #Synchronises the graph data structure with the ski resorts stored in the database fully overwriting the graph and adding all of the ski resorts to it.
+    #Parameters: ski_resort_object - Object. Return values: ski_resort_object - Object.
     try:
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()
