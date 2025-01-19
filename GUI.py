@@ -1138,6 +1138,27 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                         creating_loop = True
                         self.__window_create["-text_input-"].update("")
                         self.__window_create["-text-"].update(f"Node {run.name} must be created since it was used as the end of a run but has not been created.\nEnter the altitude of the ski lift station:")
+
+                        node_type = ""
+                        if not quit_creating:
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Do you want to create a ski lift station, a ski park or an amenity ('s', 'p' or 'a'):")
+                        while creating_loop and not quit_creating:
+                            event, values = self.__window_create.read()
+                            if event == "-return-" or event == sg.WIN_CLOSED:
+                                creating_loop = False
+                                quit_creating = True
+                            elif event == "-cancel-":
+                                self.__window_create["-text_input-"].update("")
+                            elif event == "-submit-":
+                                if values["-text_input-"] in ["s","p","a"]:
+                                    creating_loop = False
+                                    node_type = values["-text_input-"]
+                                else:
+                                    sg.popup("Error. The input must be 's', 'p' or 'a'.")
+                                    self.__window_create["-text_input-"].update("")
+
                         while creating_loop and not quit_creating:
                             event, values = self.__window_create.read()
                             if event == "-return-" or event == sg.WIN_CLOSED:
@@ -1152,7 +1173,53 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                                 else:
                                     sg.popup("Error. The altitude must be a number.")
                                     self.__window_create["-text_input-"].update("")
-                        self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
+
+                        if node_type == "p":
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter the length of the ski park (minutes):")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if values["-text_input-"].isnumeric():
+                                        if int(values["-text_input-"]) > 0:
+                                            creating_loop = False
+                                            ski_park_length = int(values["-text_input-"])
+                                        else:
+                                            sg.popup("Error. The ski park length must be greater than 0.")
+                                            self.__window_create["-text_input-"].update("")
+                                    else:
+                                        sg.popup("Error. The ski park length must be a number.")
+                                        self.__window_create["-text_input-"].update("")
+                            self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_park(run.name,altitude,ski_park_length)
+
+                        elif node_type == "a":
+                            creating_loop = True
+                            self.__window_create["-text_input-"].update("")
+                            self.__window_create["-text-"].update(f"Enter a description of the type of amenity e.g. restaurant:")
+                            while creating_loop and not quit_creating:
+                                event, values = self.__window_create.read()
+                                if event == "-return-" or event == sg.WIN_CLOSED:
+                                    creating_loop = False
+                                    quit_creating = True
+                                elif event == "-cancel-":
+                                    self.__window_create["-text_input-"].update("")
+                                elif event == "-submit-":
+                                    if re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                        creating_loop = False
+                                        amenity_type = values["-text_input-"]
+                                    else:
+                                        sg.popup("Error. The amenity type must start with a letter.")
+                                        self.__window_create["-text_input-"].update("")
+                            self.__saved_ski_resorts.resorts[ski_resort_name].add_amenity(run.name,altitude,amenity_type)
+                        
+                        elif node_type == "s":
+                            self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
 
                         creating_run = "y"
                         while creating_run == "y" and not quit_creating:
@@ -1172,7 +1239,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                                 elif event == "-cancel-":
                                     self.__window_create["-text_input-"].update("")
                                 elif event == "-submit-":
-                                    if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                    if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs and values["-text_input-"] != run.name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
                                         creating_loop = False
                                         run_name = values["-text_input-"]
                                     else:
@@ -1313,7 +1380,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                                             self.__window_create["-text_input-"].update("")
                             
                             if not quit_creating:
-                                self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
+                                self.__saved_ski_resorts.resorts[ski_resort_name].nodes[run.name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
 
                                 creating_loop = True
                                 self.__window_create["-text_input-"].update("")
@@ -1346,9 +1413,9 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
         if not quit_creating:     
             if self.__saved_ski_resorts.resorts[ski_resort_name].nodes == {}:
                 sg.popup("There are no ski lift stations in this ski resort so it has not been created.")
-            self.__window_create.close()
             add_resort_to_database(self.__saved_ski_resorts, ski_resort_name) #Add the ski resorts created in the program to the database
             Display_graph().display_ski_resort(self.__saved_ski_resorts.resorts[ski_resort_name]) #display ski resort
+        self.__window_create.close()
 
     ##############################################
     # GROUP A Skill: Cross-table parameterised SQL
@@ -1546,10 +1613,11 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                             end_node_name = cursor.fetchone()[0]
                             run_names.append(end_node_name)
                         run_name = ""
-                        if len(node_names) == 0:
+                        node_names.remove(node_name)
+                        if len(node_names) == 1:
                             sg.popup("There is only one ski lift station in this ski resort so no runs can be created.")
                             break
-                        if run_names == node_names:
+                        if set(run_names) == set(node_names):
                             sg.popup("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
                             break
                         
@@ -1741,7 +1809,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                     if not quit_modifying:
                         modify_loop = True
                         self.__window_modify["-text_input-"].update("")
-                        if len(node_names) == 0:
+                        if len(node_names) == 1:
                             sg.popup("There are no nodes to which a run or lift can be added.")
                             discontinue = True
                         else:
@@ -1760,6 +1828,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                             else:
                                 sg.popup("Error. The ski lift station name must start with a letter and already exist.")
                                 self.__window_modify["-text_input-"].update("")
+                    node_names.remove(node_name)
 
                     if not discontinue and not quit_modifying:
                         select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
@@ -1774,7 +1843,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                         run_name = ""
                         if len(node_names) == 0:
                             sg.popup("There is only one ski lift station in this ski resort so no runs can be created.")
-                        elif run_names == node_names:
+                        elif set(run_names) == set(node_names):
                             sg.popup("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
                         else:
                             modify_loop = True
@@ -1944,7 +2013,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                     if not quit_modifying:
                         modify_loop = True
                         self.__window_modify["-text_input-"].update("")
-                        if len(node_names) == 0:
+                        if len(node_names) == 1:
                             sg.popup(f"There are no nodes to which a run or lift can be added.\n")
                             discontinue = True
                         else:

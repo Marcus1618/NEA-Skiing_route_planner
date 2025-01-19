@@ -221,7 +221,7 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             previous_snow = weather_data["timelines"]["daily"][day_index-1]["values"]["snowIntensityMax"] #parsing the JSON data
             current_snow = weather_data["timelines"]["daily"][day_index]["values"]["snowIntensityMax"]
             temperature = weather_data["timelines"]["daily"][day_index]["values"]["temperatureAvg"]
-            print(temperature, current_snow) ####
+            print(f"The temperature is {temperature} degrees and the maximum snow intensity from today is {current_snow}.")
         else:
             previous_snow = "N/A"
             current_snow = "N/A"

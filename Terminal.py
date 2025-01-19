@@ -290,7 +290,7 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                 while valid == None:
                     break_time = input("At what time do you want to visit this amenity (hh:mm): ")
                     try:
-                        if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', start_time):
+                        if int(break_time[break_time.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', break_time):
                             if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
                                 if self.__compare_greater(break_time, previous_time):
                                     previous_time = break_time
@@ -395,6 +395,7 @@ class Terminal(Ui): #The object with which the user interacts with the program i
         save = input("Do you want to save this route? (y/n): ")
         if save == "y":
             previous_route_names = get_route_names()
+            route_name = ""
             while route_name in previous_route_names or not(re.match('(^[a-z]|[A-Z]).*$',route_name)):
                 route_name = input("Enter the name of the route: ")
             save_route(route_name, route, route_start_time, returned_to_start, ski_resort, self.__saved_ski_resorts)
@@ -449,9 +450,9 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                         run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
                         run_names_excluding_node.remove(node_name)
                         if len(run_names_excluding_node) == 0:
-                            run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")   
+                            run_name = input(f"Enter an end ski lift station of this run: (No previously created runs)\n")   
                         else:
-                            run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
+                            run_name = input(f"Enter an end ski lift station of this run: (Previously created run end nodes: {', '.join(run_names_excluding_node)})\n")
                     length = ""
                     while length.isnumeric() == False:
                         length = input("Enter the length of the run (minutes): ")
@@ -507,21 +508,34 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                 for run in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs: #run is the run object
                     if run.name not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes:
                         print(f"Node {run.name} must be created since it was used as the end of a run but has not been created.")
+                        node_type = ""
+                        while node_type not in ["s","p","a"]:
+                            node_type = input("Is this a ski lift station, a ski park or an amenity ('s', 'p' or 'a'): ")
                         altitude = ""
                         while altitude.isnumeric() == False:
                             altitude = input("Enter the altitude of the ski lift station: ")
                         altitude = int(altitude)
-                        self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
+                        if node_type == "p":
+                            ski_park_length = 0
+                            while ski_park_length < 1:
+                                ski_park_length = int(input("Enter the length of the ski park (minutes): "))
+                            self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_park(run.name,altitude,ski_park_length)
+                        elif node_type == "a":
+                            amenity_type = ""
+                            amenity_type = input("Enter a description of the type of amenity e.g. restaurant: ")
+                            self.__saved_ski_resorts.resorts[ski_resort_name].add_amenity(run.name,altitude,amenity_type)
+                        elif node_type == "s":
+                            self.__saved_ski_resorts.resorts[ski_resort_name].add_ski_node(run.name,altitude)
                         creating_run = "y"
                         while creating_run == "y":
                             run_name = ""
-                            while run_name in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
+                            while run_name in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].runs or run_name == run.name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)):
                                 run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
                                 run_names_excluding_node.remove(node)
                                 if len(run_names_excluding_node) == 0:
-                                    run_name = input(f"Enter an end ski lift station of this run: (No previously created ski lift stations)\n")
+                                    run_name = input(f"Enter an end ski lift station of this run: (No previously created runs\n")
                                 else:
-                                    run_name = input(f"Enter an end ski lift station of this run: (Previously created ski lift stations: {', '.join(run_names_excluding_node)})\n")
+                                    run_name = input(f"Enter an end ski lift station of this run: (Previously created run end nodes: {', '.join(run_names_excluding_node)})\n")
                             length = ""
                             while length.isnumeric() == False:
                                 length = input("Enter the length of the run (minutes): ")
@@ -562,7 +576,7 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                                 difficulty = ""
                                 while difficulty not in ["green","blue","red","black"]:
                                     difficulty = input("Enter the difficulty of the run ('green', 'blue', 'red', 'black'): ")
-                            self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
+                            self.__saved_ski_resorts.resorts[ski_resort_name].nodes[run.name].add_run(run_name,length,opening,closing,lift,difficulty,lift_type)
                             creating_run = ""
                             while creating_run not in ["y","n"]:
                                 creating_run = input("Do you want to create another run from this ski lift station? (y/n): ") #Post loop repetition test to ensure that at least one run is added to each ski lift station
@@ -655,10 +669,11 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                             end_node_name = cursor.fetchone()[0]
                             run_names.append(end_node_name)
                         run_name = ""
-                        if len(node_names) == 0:
+                        node_names.remove(node_name)
+                        if len(node_names) == 1:
                             print("There is only one ski lift station in this ski resort so no runs can be created.")
                             break
-                        if run_names == node_names:
+                        if set(run_names) == set(node_names):
                             print("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
                             break
                         while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
@@ -720,11 +735,12 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                         node_names.append(item[0])
                     node_name = ""
                     while node_name not in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
-                        if len(node_names) == 0:
+                        if len(node_names) == 1:
                             print(f"There are no nodes to which a run or lift can be added.\n")
                             discontinue = True
                         else:
                             node_name = input(f"Enter the name of the ski lift station from which you want to add a run or lift: (Previously created ski lift stations: {', '.join(node_names)})\n")
+                    node_names.remove(node_name)
                     if not discontinue:
                         select_runs = "SELECT * FROM runs WHERE node_id=(SELECT node_id FROM nodes WHERE node_name=? AND resort_name=?);"
                         cursor.execute(select_runs, [node_name, ski_resort_to_modify])
@@ -738,7 +754,7 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                         run_name = ""
                         if len(node_names) == 0:
                             print("There is only one ski lift station in this ski resort so no runs can be created.")
-                        elif run_names == node_names:
+                        elif set(run_names) == set(node_names):
                             print("There are runs from this ski lift station to all other ski lift stations in this ski resort so no more runs can be created.")
                         else:
                             while run_name in run_names or run_name == node_name or not(re.match('(^[a-z]|[A-Z]).*$',run_name)) or run_name not in node_names:
@@ -797,7 +813,7 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                         node_names.append(item[0])
                     node_name = ""
                     while node_name not in node_names or not(re.match('(^[a-z]|[A-Z]).*$',node_name)):
-                        if len(node_names) == 0:
+                        if len(node_names) == 1:
                             print(f"There are no nodes to which a run or lift can be added.\n")
                             discontinue = True
                         else:
