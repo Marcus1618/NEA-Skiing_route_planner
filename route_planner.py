@@ -5,6 +5,9 @@ from ski_resorts import Ski_resorts, Ski_resort, Node, Ski_node, Run
 #Deals with the generation of a route through a ski resort.
 
 class Plan_route(): #Plan_route class is used to create a viable route through a ski resort
+    #########################################
+    #Excellent coding style: Cohesive modules
+    #########################################
     DIFFICULTY_MULTIPLIER = 10000
     ALTITUDE_MULTIPLIER = 1000
     REPETITION_MULTIPLIER = 100
@@ -54,6 +57,8 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
             return False
     
     def __add_times(self, t1, t2): #Adds a time t1 in hh:mm format to an integer number of minutes t2. Parameters: t1 – String, t2 – Integer. Return values: time - String.
+        if t2 == inf:
+            return "23:59"
         h1, m1 = t1.split(":")
         m2 = t2
         mins = int(m1) + int(m2)
@@ -71,6 +76,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     # GROUP A Skill: Graph traversal (Dijkstra’s algorithm)
     #######################################################
     def __dijkstras_traversal(self,start,time_independent): #Dijkstra's algorithm to find the shortest path from a node in the graph to all of the other nodes.
+        #################################
+        #Good coding style: Code comments
+        #################################
         #Parameters: start (the node at which the traversal begins) - String, time_independent – Boolean. Return values: distances – list, previous_node - list.
         node_number = self.__ski_resort_object.node_number()
         queue = Priority_queue(node_number)
@@ -408,6 +416,9 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
     def __should_route_continue(self,adjacent_nodes): #Determines if there is a 3 move route that will be able to be taken in the future when there is not currently one possible. Parameters: adjacent_nodes – List. Return values: continue_route – Boolean.
+        ###########################################
+        #Good coding style: Appropriate indentation
+        ###########################################
         continue_route = False
         for run in adjacent_nodes: #Iterating through the adjacent nodes to see if there are three nodes in a sequence that are all either open or will be open in the future
             if self.__compare_greater(run.opening, self.__ski_resort_object.time) or (self.__compare_greater_or_equal(self.__ski_resort_object.time, run.opening) and self.__compare_greater(run.closing, self.__ski_resort_object.time)):
@@ -541,8 +552,17 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
     ################################################
     # GROUP A Skill: Complex user-defined algorithms
     ################################################
+    ##################################################################################################################
+    #Good coding style: Modularisation of code including splitting code into functions, procedures and different files
+    ##################################################################################################################
     def get_route(self, as_close_to_time, route, start, time_elapsed): #Generates the complete route through the ski resort returing the route as a list of dictionaries and a boolean indicating if the route returned to the starting node.
         #Parameters: as_close_to_time – Boolean. Return values: route – List of dictionaries, returned_to_start – Boolean.
+        ###############################################
+        #Good coding style: Good use of local variables
+        ###############################################
+        ############################################
+        #Good coding style: Managed casting of types
+        ############################################
         complete = False
         chosen_node = self.__ski_resort[start]
         returned_to_start = True

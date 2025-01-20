@@ -1,5 +1,8 @@
 from ski_resorts import Ski_resorts, Ski_resort, Ski_node, Run
 #Reads from and writes to a text file containing information on ski routes that have been previously generated and saved
+############################################
+#Good coding style: File paths parameterised
+############################################
 FILE_NAME = "saved_routes.txt"
 
 def add_times(t1, t2): #Adds two times t1 and t2 together where t1 is in the format hh:mm and t2 is just an integer number of minutes. Parameters: t1 – string, t2 – integer. Return values: string.

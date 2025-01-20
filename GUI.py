@@ -10,6 +10,9 @@ from database_changes import sync_from_database, add_resort_to_database
 from file_changes import view_previous_route, save_route, get_route_names
 #Implements the graphical user interface and allows the user to interact with it
 
+##############################################################################################
+#Good coding style: Well-designed user interface separating inputs and outputs from processing
+##############################################################################################
 class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
     DATABASE_NAME = "ski_resorts.db"
     def __init__(self): #Initialises the database creating the tables if they are not already created and creating the graph structure. Parameters: None. Return values: None.
@@ -748,6 +751,9 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                     route_output.append(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({self.__saved_ski_resorts.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
                 else: #add lift/run from x to y
                     route_output.append(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(route_start_time,route[i+1]['time_elapsed'])}")
+            
+            if len(route) == 0:
+                print("There is no possible valid route with the parameters specified.")
 
             if not returned_to_start:
                 route_output.append(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
@@ -2099,7 +2105,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                             elif lift_or_run == 1 and not quit_modifying:
                                 modify_loop = True
                                 self.__window_modify["-text_input-"].update("")
-                                self.__window_modify["-text-"].update(f"What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n6. Difficulty\n7. Lift type\n")
+                                self.__window_modify["-text-"].update(f"What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close lift\n7. Lift type\n")
                                 while modify_loop and not quit_modifying:
                                     event, values = self.__window_modify.read()
                                     if event == "-return-" or event == sg.WIN_CLOSED:
@@ -2108,11 +2114,11 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                                     elif event == "-cancel-":
                                         self.__window_modify["-text_input-"].update("")
                                     elif event == "-submit-":
-                                        if values["-text_input-"] in ["1","2","3","4","5","6","7"]:
+                                        if values["-text_input-"] in ["1","2","3","4","5","7"]:
                                             modify_loop = False
                                             modify3_option = values["-text_input-"]
                                         else:
-                                            sg.popup("Error. The input must be '1', '2', '3', '4', '5', '6' or '7'.")
+                                            sg.popup("Error. The input must be '1', '2', '3', '4', '5' or '7'.")
                                             self.__window_modify["-text_input-"].update("")
 
                             if modify3_option == "1" and not quit_modifying:

@@ -10,6 +10,9 @@ from file_changes import view_previous_route, save_route, get_route_names
 #Implements the terminal based user interface and  allows the user to interact with the program
 
 class Terminal(Ui): #The object with which the user interacts with the program inherited from ‘Ui’
+    ####################################
+    #Good coding style: Use of constants
+    ####################################
     DATABASE_NAME = "ski_resorts.db"
     def __init__(self): #Initialises the database creating the tables if they are not already created and creating the graph structure. Parameters: None. Return values: None.
         self.__saved_ski_resorts = Ski_resorts()
@@ -17,6 +20,9 @@ class Terminal(Ui): #The object with which the user interacts with the program i
         ###############################################
         # GROUP A Skill: Complex data model in database
         ###############################################
+        ##############################################
+        #Excellent coding style: Defensive programming
+        ##############################################
         try:
             with sqlite3.connect(self.DATABASE_NAME) as conn:
                 cursor = conn.cursor()
@@ -228,7 +234,9 @@ class Terminal(Ui): #The object with which the user interacts with the program i
         valid = None
         while valid == None:
             length = input("How long do you want to ski for (hh:mm): ")
-
+            ################################################
+            #Excellent coding style: Good exception handling
+            ################################################
             try:
                 if int(length[length.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', length):
                     valid = True
@@ -289,6 +297,9 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                 valid = None
                 while valid == None:
                     break_time = input("At what time do you want to visit this amenity (hh:mm): ")
+                    ##################################################
+                    #Excellent coding style: Suitable input validation
+                    ##################################################
                     try:
                         if int(break_time[break_time.index(":")+1:]) < 60 and re.match(r'^\d{2}:\d{2}$', break_time):
                             if self.__compare_greater(break_time, start_time) and self.__compare_greater(route_stop_time, break_time):
@@ -388,6 +399,9 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                 print(f"{i+1}. Break for {route[i+1]["time_elapsed"]-route[i]["time_elapsed"]} minutes at {route[i+1]["start"]} ({self.__saved_ski_resorts.resorts[ski_resort].nodes[route[i+1]["start"]]}) - {self.__add_times(route_start_time,route[i+1]["time_elapsed"])}")
             else: #add lift/run from x to y
                 print(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(route_start_time,route[i+1]['time_elapsed'])}")
+
+        if len(route) == 0:
+            print("There is no possible valid route with the parameters specified.")
 
         if not returned_to_start:
             print(f"Your route could not return to the starting point in the time that you wanted to ski for due to ski lift closing times.")
@@ -851,7 +865,7 @@ class Terminal(Ui): #The object with which the user interacts with the program i
                                     modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n6. Difficulty\n")
                             elif lift_or_run == 1:
                                 while modify3_option not in ["1","2","3","4","5","7"]:
-                                    modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close run\n7. Lift type\n")
+                                    modify3_option = input("What do you want to modify?\n1. Length\n2. Opening time\n3. Closing time\n4. Switch lift or run\n5. Close lift\n7. Lift type\n")
 
                             if modify3_option == "1":
                                 length = ""

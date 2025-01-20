@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 ######################################################################################################################################################
 # GROUP A Skill: Complex user-defined use of a object-orientated programming model e.g. classes, inheritance, composition, polymorphism and interfaces
 ######################################################################################################################################################
+##################################################################
+#Excellent coding style: Grouping of modules with a common purpose
+##################################################################
 class Ski_resorts(): #The object at the top of the graph hierarchy which stores a dictionary of key resort name and value the corresponding resort object.
     def __init__(self): #Initialises the resorts dictionary. Parameters: None. Return values: None.
         #############################
@@ -145,6 +148,9 @@ class Node(): #The general node class from which ‘Ski_node’, ‘Ski_park’ 
         self.__length = 0
         self.__amenity_type = "None"
 
+    ################################################
+    #Excellent coding style: Loosely coupled modules
+    ################################################
     def add_run(self,name,length,opening,closing,lift,difficulty,lift_type): #Appends a run object to the list ‘runs’. Parameters: name – String, length – Integer, opening – String, closing – String, lift – Boolean, difficulty – String, lift_type – String. Return values: None.
         self.__runs.append(Run(name,length,opening,closing,lift,difficulty,lift_type))
     
@@ -191,9 +197,15 @@ class Ski_node(Node): #A ski lift station node inherited from the node class
     @property
     def node_type(self): #Node_type getter method. This method is used instead of the inherited one of the same name if it is called by a ski_node. Parameters: None. Return values: node_type – String.
         return self.__node_type
-    
+
+################################################################################################################
+#Excellent coding style: Modules with appropriate interfaces including suitable public and private method access
+################################################################################################################
 class Run(): #The lowest object in the graph data structure hierarchy.
     def __init__(self,name,length,opening,closing,lift,difficulty,lift_type): #Initialises the attributes. Parameters: name – String, length – Integer, opening – String, closing – String, lift – Boolean, difficulty – String, lift_type – String. Return values: None.
+        #########################################################
+        #Basic coding style: Meaningful variable identifier names
+        #########################################################
         self._name = name
         self._length = length
         self._open_length = length
