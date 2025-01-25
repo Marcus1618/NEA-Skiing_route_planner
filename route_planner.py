@@ -159,13 +159,13 @@ class Plan_route(): #Plan_route class is used to create a viable route through a
         min_altitude, max_altitude = self.__min_and_max_altitudes()
         if self.__weather != "unknown":
             if not(self.__previous_snow == "N/A" or self.__current_snow == "N/A" or self.__temperature == "N/A"):
-                if self.__current_snow > 0:
+                if int(self.__current_snow) > 0:
                     max_altitude_fraction = max_altitude_fraction*0.75
-                if self.__temperature < 3:
+                if int(self.__temperature) < 3:
                     min_altitude_fraction = min_altitude_fraction*0.5
                 else:
                     min_altitude_fraction = min_altitude_fraction*1.3
-                if self.__previous_snow > 0:
+                if int(self.__previous_snow) > 0:
                     min_altitude_fraction = min_altitude_fraction*0.5
         if self.__snow_conditions != "unknown":
             if self.__snow_conditions == "good":

@@ -14,32 +14,11 @@ Val Thorens
 12. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:46
 13. Run from 3 Vallees bottom to Snow park 1 taking 5 minutes - 09:51
 
-Testing 72
+Test objective 72b
 Val Thorens
-1. Lift from Plein Sud bottom to Plein Sud top taking 10 minutes - 09:10
-2. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:11
-3. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:12
-4. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:18
-5. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:22
-6. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:23
-7. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:24
-8. Lift from 3 Vallees bottom to 3 Vallees top taking 6 minutes - 09:30
-9. Run from 3 Vallees top to Plein Sud top taking 4 minutes - 09:34
-10. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:35
-11. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:36
-12. Run from 3 Vallees bottom to Snow park 1 taking 5 minutes - 09:41
-13. Run from Snow park 1 to Plein Sud bottom taking 10 minutes - 09:51
-
-Test 2
-Val Thorens
-1. Lift from Plein Sud bottom to Plein Sud top taking 10 minutes - 09:10
-2. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:11
-3. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:12
-4. Run from 3 Vallees bottom to Snow park 1 taking 5 minutes - 09:17
-5. Run from Snow park 1 to Plein Sud bottom taking 10 minutes - 09:27
-6. Lift from Plein Sud bottom to Plein Sud top taking 10 minutes - 09:37
-7. Run from Plein Sud top to Pionniers top taking 1 minutes - 09:38
-8. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 09:39
-9. Run from 3 Vallees bottom to Snow park 1 taking 5 minutes - 09:44
-10. Run from Snow park 1 to Plein Sud bottom taking 10 minutes - 09:54
+1. Lift from Plein Sud bottom to Plein Sud top taking 10 minutes - 10:10
+2. Run from Plein Sud top to Pionniers top taking 1 minutes - 10:11
+3. Run from Pionniers top to 3 Vallees bottom taking 1 minutes - 10:12
+4. Run from 3 Vallees bottom to Snow park 1 taking 5 minutes - 10:17
+5. Run from Snow park 1 to Plein Sud bottom taking 10 minutes - 10:27
 

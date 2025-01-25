@@ -752,7 +752,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                 else: #add lift/run from x to y
                     route_output.append(f"{i+1}. {route[i+1]["lift"].title()} from {route[i]['start']} to {route[i+1]['start']} taking {route[i+1]['time_elapsed']-route[i]['time_elapsed']} minutes - {self.__add_times(route_start_time,route[i+1]['time_elapsed'])}")
             
-            if len(route) == 0:
+            if len(route) == 1:
                 print("There is no possible valid route with the parameters specified.")
 
             if not returned_to_start:
@@ -956,8 +956,13 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                     while creating_run == "y" and not quit_creating: #Allow at least one run to be created from each ski lift station
                         creating_loop = True
                         self.__window_create["-text_input-"].update("")
+                        run_names = []
+                        for run_object in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs:
+                            run_names.append(run_object.name)
                         run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
                         run_names_excluding_node.remove(node_name)
+                        for name in run_names:
+                            run_names_excluding_node.remove(name)
                         if len(run_names_excluding_node) == 0:
                             self.__window_create["-text-"].update(f"Enter an end ski lift station of this run: (No previously created ski lift stations)")
                         else:
@@ -970,12 +975,14 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                             elif event == "-cancel-":
                                 self.__window_create["-text_input-"].update("")
                             elif event == "-submit-":
-                                if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                all_nodes = self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys()
+                                if values["-text_input-"] not in run_names_excluding_node and values["-text_input-"] != node_name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]) and values["-text_input-"] in all_nodes:
                                     creating_loop = False
                                     run_name = values["-text_input-"]
                                 else:
                                     sg.popup("Error.  The name entered cannot already be a run or be the same as the node name. It must also start with a letter.")
                                     self.__window_create["-text_input-"].update("")
+                        run_names_excluding_node.remove(run_name)
                         
                         if not quit_creating:
                             creating_loop = True
@@ -1131,6 +1138,10 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                                 else:
                                     sg.popup("Error. The input must be 'y' or 'n'.")
                                     self.__window_create["-text_input-"].update("")
+                        
+                        if len(run_names_excluding_node) == 0:
+                            creating_run = "n"
+                            sg.popup("A new run cannot be created since there are no available nodes to end this run at.")
 
                 elif create_node == "n" and not quit_creating:
                     creating = False
@@ -1231,8 +1242,13 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                         while creating_run == "y" and not quit_creating:
                             creating_loop = True
                             self.__window_create["-text_input-"].update("")
+                            run_names = []
+                            for run_object in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[run.name].runs:
+                                run_names.append(run_object.name)
                             run_names_excluding_node = list(self.__saved_ski_resorts.resorts[ski_resort_name].nodes.keys())
-                            run_names_excluding_node.remove(node_name)
+                            run_names_excluding_node.remove(run.name)
+                            for name in run_names:
+                                run_names_excluding_node.remove(name)
                             if len(run_names_excluding_node) == 0:
                                 self.__window_create["-text-"].update(f"Enter an end ski lift station of this run: (No previously created ski lift stations)")
                             else:
@@ -1245,7 +1261,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                                 elif event == "-cancel-":
                                     self.__window_create["-text_input-"].update("")
                                 elif event == "-submit-":
-                                    if values["-text_input-"] not in self.__saved_ski_resorts.resorts[ski_resort_name].nodes[node_name].runs and values["-text_input-"] != run.name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
+                                    if values["-text_input-"] not in run_names_excluding_node and values["-text_input-"] != run.name and re.match('(^[a-z]|[A-Z]).*$',values["-text_input-"]):
                                         creating_loop = False
                                         run_name = values["-text_input-"]
                                     else:
@@ -1619,8 +1635,7 @@ class Gui(Ui): #A graphical user interface object inherited from ‘Ui’
                             end_node_name = cursor.fetchone()[0]
                             run_names.append(end_node_name)
                         run_name = ""
-                        node_names.remove(node_name)
-                        if len(node_names) == 1:
+                        if len(node_names) == 0:
                             sg.popup("There is only one ski lift station in this ski resort so no runs can be created.")
                             break
                         if set(run_names) == set(node_names):
